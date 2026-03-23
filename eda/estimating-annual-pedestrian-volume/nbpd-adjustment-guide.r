@@ -26,5 +26,12 @@ hourly_to_annual <- function(hourly_counts, hour_factor, day_factor, month_facto
   return(annual_counts)
 }
 
-hourly_to_annual(6, hour_factor=0.09, day_factor = 0.12, month_factor = 0.05)
+annual_ped_volume <- hourly_to_annual(6, hour_factor=0.09, day_factor = 0.12, month_factor = 0.05)
 hourly_to_annual(11.4, hour_factor=0.09, day_factor = 0.12, month_factor = 0.095)
+
+aadt <- 11000
+annual_veh_volume <- aadt * 365
+
+exposure <- annual_ped_volume * annual_veh_volume
+exposure_pm <- exposure / 1000000
+print(glue("Exposure per million interactions: {exposure_pm}"))
