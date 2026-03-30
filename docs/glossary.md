@@ -19,3 +19,13 @@
 | CMF | Crash Modification Factor | Multiplicative factor estimating the change in crash frequency after implementing a safety treatment. |
 | DHV | Design Hour Volume | The 30th highest annual hourly traffic volume reported as % of AADT. |
 | DVMT| Daily Vehicle Miles Travelled | The average daily vehicle miles traveled for the segment. (Annual Average Daily Traffic (AADT) multiplied by the length of the segment).|
+|PDO| Property Damage Only|Level of crash severity where no one is injured|
+|FI| Fatal and Injury|Level of crash severity where someone is injured or killed|
+|Arterial||A through road|
+|4ST|4 leg stop controlled intersection|Intersection with 4 approaches with stop control on minor approaches|
+|4SG|4 leg signalized intersection|Intersection with 4 approaches with signalized traffic control|
+|3ST|3 leg stop controlled intersection|Intersection with 3 approaches with stop control on minor approaches|
+|3ST|3 leg signalized intersection|Intersection with 3 approaches with signalized traffic control|
+|Nbimv|Math notation: $N_{biMV}$|The predicted number of multi-vehicle crashes per year for the baseline scenario of a site/road segment|
+|Nbisv|Math notation: $N_{biSV}$|The predicted number of single-vehicle crashes per year for the baseline scenario of a site/road segment|
+|Npedi||Number of pedestrian Incidents|
