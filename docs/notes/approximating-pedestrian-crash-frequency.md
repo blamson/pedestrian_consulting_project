@@ -192,6 +192,8 @@ For stop-controlled intersections, the HSM estimates pedestrian crashes as a fix
 
 A traffic signal CMF (mean = 0.77, range ≈ 0.55–0.99) is applied multiplicatively to the existing combined CMF, consistent with HSM methodology.
 
+Traffic signal CMF Link - [CMID 319](https://cmfclearinghouse.fhwa.dot.gov/detail.php?facid=319)
+
 | Metric             | Old   | New (low, mean, high)  |
 | ------------------ | ----- | ---------------------- |
 | Combined CMF       | 0.91  | 0.5005, 0.7007, 0.9009 |
@@ -249,6 +251,8 @@ Baseline estimates suggest one pedestrian crash every **40–60 years**.
 ## Applying Curb Extension CMF
 
 A curb extension (bulb-out) CMF of 0.67 is applied multiplicatively to the existing lighting-adjusted CMF (0.91), yielding a combined CMF of 0.6097.
+
+Curb Extension CMF Link - [CMID 1786](https://cmfclearinghouse.fhwa.dot.gov/detail.php?facid=1786)
 
 | Metric           | Values (Incidents/year) |
 | ---------------- | ----------------------- |
