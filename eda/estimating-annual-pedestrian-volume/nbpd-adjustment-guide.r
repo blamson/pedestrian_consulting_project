@@ -1,5 +1,7 @@
 library(glue)
-hourly_to_annual <- function(hourly_counts, hour_factor, day_factor, month_factor) {
+hourly_to_annual <- function(intersection_name, hourly_counts, hour_factor, day_factor, month_factor) {
+  print(glue("Estimating pedestrian volume for {intersection_name}"))
+
   print(glue("Hourly volume: {hourly_counts}"))
 
   print(glue("Step 1. Adjusting for evening pedestrian traffic ---"))
@@ -26,12 +28,20 @@ hourly_to_annual <- function(hourly_counts, hour_factor, day_factor, month_facto
   return(annual_counts)
 }
 
-annual_ped_volume <- hourly_to_annual(6, hour_factor=0.09, day_factor = 0.12, month_factor = 0.05)
-hourly_to_annual(11.4, hour_factor=0.09, day_factor = 0.12, month_factor = 0.095)
+# Mesa and Agate ---
+intersection_name <- "Mesa and Agate"
+annual_ped_volume <- hourly_to_annual(intersection_name=intersection_name, hourly_counts=6, hour_factor=0.09, day_factor = 0.12, month_factor = 0.05)
+# hourly_to_annual(11.4, hour_factor=0.09, day_factor = 0.12, month_factor = 0.095)
 
-aadt <- 11000
-annual_veh_volume <- aadt * 365
+# aadt <- 11000
+# annual_veh_volume <- aadt * 365
 
-exposure <- annual_ped_volume * annual_veh_volume
-exposure_pm <- exposure / 1000000
-print(glue("Exposure per million interactions: {exposure_pm}"))
+# exposure <- annual_ped_volume * annual_veh_volume
+# exposure_pm <- exposure / 1000000
+# print(glue("Exposure per million interactions: {exposure_pm}"))
+
+# 4th and Agate
+
+# 4th and Agate ---
+intersection_name <- "4th and Agate"
+annual_ped_volume <- hourly_to_annual(intersection_name=intersection_name, hourly_counts=7, hour_factor=0.10, day_factor = 0.12, month_factor = 0.05)

@@ -26,3 +26,6 @@
 |4SG|4 leg signalized intersection|Intersection with 4 approaches with signalized traffic control|
 |3ST|3 leg stop controlled intersection|Intersection with 3 approaches with stop control on minor approaches|
 |3ST|3 leg signalized intersection|Intersection with 3 approaches with signalized traffic control|
+|Nbimv|Math notation: $N_{biMV}$|The predicted number of multi-vehicle crashes per year for the baseline scenario of a site/road segment|
+|Nbisv|Math notation: $N_{biSV}$|The predicted number of single-vehicle crashes per year for the baseline scenario of a site/road segment|
+|Npedi||Number of pedestrian Incidents|

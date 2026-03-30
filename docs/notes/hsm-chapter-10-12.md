@@ -93,4 +93,66 @@ $AADT_{\text{maj}} = $ AADT for major-road approaches
 
 $AADT_{\text{min}} = $ AADT for minor-road approaches
 
-$a, b, c = $ Regression coefficients
+$a, b, c = $ Regression coefficients.
+
+The SPFs in this chapter apply to the following AADT ranges:
+
+4ST: 
+- $AADT_{\text{maj}}$: Between 0 and 78,300 vehicles per day
+- $AADT_{\text{min}}$: Between 0 and 7,400 vehicles per day
+
+Table 11-7 presents the coefficient values relevant to this type of site. The overdispersion parameter is only used for empiracle bayes SPFs. 
+
+|Intersection type/severity level|a|b|c|Overdispersion parameter|
+|---|---|---|---|---|
+|4ST Total|-10.008|0.848|0.448|0.494|
+|4ST Fatal and Injury|-11.554|0.888|0.525|0.742|
+|4ST Fatal and Injury*|-10.734|0.828|0.412|0.655|
+|3ST Total|-12.526|1.204|0.236|0.460|
+|3ST Fatal and Injury|-12.664|1.107|0.272|0.569|
+|3ST Fatal and Injury*|-11.989|1.013|0.228|0.566|
+
+* Using the KABCO scale, these include only KAB crashes. Crashes with severity level c (possible injury) are not included. 
+
+Table 11-9 provides the proportions required to break down crashes by accident type. 
+
+|Intersection type|Collision type|Total|Fatal and Injury|Fatal and Injury*|PDO|
+|---|---|---|---|---|---|
+|Three-leg|Head-on|0.029|0.043|0.052|0.020|
+|Three-leg|Sideswipe|0.133|0.058|0.057|0.179|
+|Three-leg|Read-end|0.289|0.247|0.142|0.315|
+|Three-leg|Angle|0.263|0.369|0.381|0.198|
+|Three-leg|Single|0.234|0.219|0.284|0.244|
+|Three-leg|Other|0.052|0.064|0.084|0.044|
+|Four-leg|Head-on|0.016|0.018|0.023|0.015|
+|Four-leg|Sideswipe|0.107|0.042|0.040|0.156|
+|Four-leg|Read-end|0.228|0.213|0.108|0.240|
+|Four-leg|Angle|0.395|0.534|0.571|0.292|
+|Four-leg|Single|0.202|0.148|0.199|0.243|
+|Four-leg|Other|0.051|0.046|0.059|0.055|
+
+* Using the KABCO scale, these include only KAB crashes. Crashes with severity level c (possible injury) are not included. 
+
+Appendix 11B presents alternative SPFs that can be applied to predict crash frequencies for selected collision types for intersections with minor-road stop control on rural multilane highways.
+
+### 11.7.3 CMFs for Intersections
+
+#### Lighting at night
+
+$$
+\text{CMF}_{4i} = 1.0 - 0.38 \cdot p_{ni}
+$$
+
+Where
+
+$\text{CMF}_{4i} = $ cmf for the effect of lighting on total crashes and,
+
+$p_{ni} = $ The proportion of total crashes for unlighted intersections that occur at night. 
+
+For the latter we can take from Table 11-24.
+
+|Intersection type|$p_{ni}$|$\text{CMF}_{4i}$
+|---|---|---|
+|3ST|0.276|$0.89626$|
+|4ST|0.273|$0.89512$|
+
