@@ -1,19 +1,10 @@
 # Approximating Pedestrian Volumes
 
-# 4th street
-
-These are volumes per hour in the given intervals. So not cumulative. So the first row is 7people/hour. 
-
-|Interval|Volume|
-|---|---|
-|15:45|7|
-|14:00|6|
-|13:00|3|
-|11:45|2|
+This writeup uses the guide from the National Bicycle & Pedestrian Documentation Project attached in the Agate & Mesa memo provided by SGM. It converts observed peak pedestrian volume into daily, weekly, monthly and annual pedestrian volumes using a variety of factors. 
 
 # Mesa Street
 
-Raw counts
+## Observed data
 
 |Peak duration|Total pedestrians|PPH|Start time|
 |---|---|---|---|
@@ -116,4 +107,36 @@ Monthly volume: 4799.08333333333
 Step 5. Estimating annual volume ---
 Annual volume: 50516.6666666667
 [1] 50516.67
+```
+
+# 4th street
+
+## Observed data
+
+These are volumes per hour in the given intervals. So not cumulative. So the first row is 7 people/hour. As it is the highest it is what we will be using. 
+
+|Interval|Volume (pph)|
+|---|---|
+|2/19/2025 15:45|7|
+|2/19/2025 14:00|6|
+|2/19/2025 13:00|3|
+|2/19/2025 11:45|2|
+
+This data was collected on the same day as the Mesa observations, so the same day/month factors can be used. The only difference in this calculation is a change to the hour factor. 
+
+Looking at the row for 15:00 on a multi-use path, we get an hourly factor of 0.10. From this we run the same script as above to get the following results. 
+
+```
+Estimating pedestrian volume for 4th and Agate
+Hourly volume: 7
+Step 1. Adjusting for evening pedestrian traffic ---
+Hourly volume adjusted: 7.35
+Step 2. Estimating daily volume ---
+Daily volume: 73.5
+Step 3. Estimating weekly volume ---
+Weekly volume: 612.5
+Step 4. Estimating monthly volume ---
+Monthly volume: 2652.125
+Step 5. Estimating annual volume ---
+Annual volume: 53042.5
 ```
