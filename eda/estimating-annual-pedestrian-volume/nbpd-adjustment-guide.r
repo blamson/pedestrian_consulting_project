@@ -45,3 +45,4 @@ annual_ped_volume <- hourly_to_annual(intersection_name=intersection_name, hourl
 # 4th and Agate ---
 intersection_name <- "4th and Agate"
 annual_ped_volume <- hourly_to_annual(intersection_name=intersection_name, hourly_counts=7, hour_factor=0.10, day_factor = 0.12, month_factor = 0.05)
+
