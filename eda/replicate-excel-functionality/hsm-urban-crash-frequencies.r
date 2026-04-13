@@ -131,7 +131,7 @@ estimate_crashes <- function(
 # MAIN SCRIPT ---
 spfs <- read_csv("data/spfs.csv")
 
-baseline <- estimate_crashes(
+base_4th <- estimate_crashes(
   spfs,
   int_type = "4ST",
   aadt_major = 11000,
@@ -142,7 +142,7 @@ baseline <- estimate_crashes(
   signal = FALSE
 )
 
-after <- estimate_crashes(
+post_4th <- estimate_crashes(
   spfs,
   int_type = "4ST",
   aadt_major = 11000,
@@ -153,4 +153,52 @@ after <- estimate_crashes(
   signal = TRUE
 )
 
-result <- baseline %>% bind_rows(after)
+aadt_minor <- 0.076 * 11000
+base_mesa_low <- estimate_crashes(
+  spfs,
+  int_type = "3ST",
+  aadt_major = 11000,
+  aadt_minor = aadt_minor,
+  lighting = TRUE,
+  twltl = TRUE,
+  bulbout = FALSE,
+  signal = FALSE
+)
+
+post_mesa_low <- estimate_crashes(
+  spfs,
+  int_type = "3ST",
+  aadt_major = 11000,
+  aadt_minor = aadt_minor,
+  lighting = TRUE,
+  twltl = TRUE,
+  bulbout = TRUE,
+  signal = FALSE
+)
+
+aadt_minor <- 0.166 * 11000
+base_mesa_high <- estimate_crashes(
+  spfs,
+  int_type = "3ST",
+  aadt_major = 11000,
+  aadt_minor = aadt_minor,
+  lighting = TRUE,
+  twltl = TRUE,
+  bulbout = FALSE,
+  signal = FALSE
+)
+
+post_mesa_high <- estimate_crashes(
+  spfs,
+  int_type = "3ST",
+  aadt_major = 11000,
+  aadt_minor = aadt_minor,
+  lighting = TRUE,
+  twltl = TRUE,
+  bulbout = TRUE,
+  signal = FALSE
+)
+
+result <- bind_rows(list(base_4th, post_4th, base_mesa_low, base_mesa_high, post_mesa_low, post_mesa_high))
+
+# readr::write_csv(result, "data/initial_results_04-12-2026.csv")
