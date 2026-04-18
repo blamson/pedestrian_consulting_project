@@ -1,5 +1,4 @@
 library(dplyr)
-library(readr)
 
 is_missing_like <- function(x) {
   if (is.null(x)) return(TRUE)
@@ -163,6 +162,23 @@ get_ped_factor <- function(int_type) {
   1
 }
 
+
+calc_long_term_ped_accident_probability <- function(num_acc_per_year=1, years=10){
+  # This script takes advantage of the "accidents per year" output we get from HSM models
+  # We get another perspective on the output here, seeing the probability of at least one accident in 10 years
+  # We use the poisson distribution for this, and assume a constant npedi rate over t years.
+  # This gives us a lambda=npedi * t
+  # We want: 1 - P(0 accidents in 10 years)
+  # Assumes a constant rate across all years
+  # Common input for accidents per year is npedi from hsm output
+
+  lambda <- num_acc_per_year * years
+  prob_accident <- round(1 - ppois(0, lambda), 5)
+
+  return(prob_accident)
+}
+
+
 estimate_crashes <- function(
   spfs,
   int_type,
@@ -233,7 +249,7 @@ estimate_crashes <- function(
 
   pred_veh = nbi * cmf_veh
   pred_ped = nped_base * cmf_veh * cmf_ped
-
+  ten_year_ped_prob = calc_long_term_ped_accident_probability(pred_ped)
 
   # Return single row data frame with all relevant information
   tibble::tibble(
@@ -250,97 +266,12 @@ estimate_crashes <- function(
     nbi_mv = nbimv,
     nbi_sv = nbisv,
     nbi_all = nbi,
+    nped_base = nped_base,
     cmf_veh = cmf_veh,
     cmf_ped = cmf_ped,
     ped_factor = fpedi,
     pred_veh = pred_veh, #nbi * cmf_product,
-    pred_ped = pred_ped #nbi * cmf_product * fpedi,
+    pred_ped = pred_ped, #nbi * cmf_product * fpedi,
+    ten_year_ped_prob = ten_year_ped_prob
   )
 }
-
-# MAIN SCRIPT ---
-spfs <- read_csv("data/spfs.csv")
-aadt_max <- readr::read_csv("data/aadt_maximums.csv", show_col_types = FALSE)
-
-print("Calculating estimates for Agate and 4th")
-base_4th <- estimate_crashes(
-  spfs,
-  int_type = "4ST",
-  aadt_major = 11000,
-  aadt_minor = 836,
-  aadt_max = aadt_max,
-  lighting = TRUE,
-  twltl = TRUE
-)
-
-post_4th <- estimate_crashes(
-  spfs,
-  int_type = "4ST",
-  aadt_major = 11000,
-  aadt_minor = 1386,
-  aadt_max = aadt_max,
-  lighting = TRUE,
-  twltl = TRUE,
-  signal_cmf = TRUE
-)
-
-post_4th_signalized <- estimate_crashes(
-  spfs,
-  int_type = "4SG",
-  aadt_major = 11000,
-  aadt_minor = 1386,
-  aadt_max = aadt_max,
-  lighting = TRUE,
-  twltl = TRUE,
-  nlanes = 5,
-  pedvol = 53042.5 / 365
-)
-
-print("Calculating estimates for Agate and Mesa ---")
-aadt_minor <- 0.076 * 11000
-base_mesa_low <- estimate_crashes(
-  spfs,
-  int_type = "3ST",
-  aadt_major = 11000,
-  aadt_minor = aadt_minor,
-  aadt_max = aadt_max,
-  lighting = TRUE,
-  twltl = TRUE
-)
-
-post_mesa_low <- estimate_crashes(
-  spfs,
-  int_type = "3ST",
-  aadt_major = 11000,
-  aadt_minor = aadt_minor,
-  aadt_max = aadt_max,
-  lighting = TRUE,
-  twltl = TRUE,
-  bulbout = TRUE
-)
-
-aadt_minor <- 0.166 * 11000
-base_mesa_high <- estimate_crashes(
-  spfs,
-  int_type = "3ST",
-  aadt_major = 11000,
-  aadt_minor = aadt_minor,
-  aadt_max = aadt_max,
-  lighting = TRUE,
-  twltl = TRUE
-)
-
-post_mesa_high <- estimate_crashes(
-  spfs,
-  int_type = "3ST",
-  aadt_major = 11000,
-  aadt_minor = aadt_minor,
-  aadt_max = aadt_max,
-  lighting = TRUE,
-  twltl = TRUE,
-  bulbout = TRUE
-)
-
-result <- bind_rows(list(base_4th, post_4th, post_4th_signalized, base_mesa_low, base_mesa_high, post_mesa_low, post_mesa_high))
-
-# readr::write_csv(result, "data/initial_results_04-12-2026.csv")
