@@ -24,6 +24,9 @@ validate_inputs <- function(
   pedvol = NULL, 
   nlanes = NULL
 ) {
+  # This validation function is very aggressive, basically just kills the process if anything fails. 
+  # Anything more sophisticated than that is out of scope for this project
+
   # Existence checks ---
   stop_if_missing_like("int_type", int_type)
   stop_if_missing_like("aadt_major", aadt_major)
@@ -127,15 +130,16 @@ compute_spf_ped_signalized <- function(spf_row, aadt_major, aadt_minor, pedvol, 
 compute_cmfs <- function(
   lighting,
   twltl,
-  # bulbout,
   signal_cmf
 ) {
   # Return the product of all provided CMFs for vehicles
+  # Lighting cmf taken from HSM equation 12-36
+  # Signal cmf taken from cmfclearinghouse - cmid 319
+  # TWLTL cmf taken from cmfclearinghouse - cmid 1285
 
   prod(c(
     lighting = if (lighting) 0.91 else 1,
     twltl = if (twltl) 0.92 else 1,
-    # bulbout = if (bulbout) 0.63 else 1,
     signal_cmf = if (signal_cmf) 0.77 else 1
   ))
 }
@@ -146,9 +150,11 @@ compute_cmfs_ped <- function(
   school = FALSE
 ) {
   # Pedestrian-only CMFs
+  # Bulbout cmf taken from cmfclearinghouse - cmid 1786
+  # School cmf taken from HSM table 12-29
   prod(c(
     bulbout = if (bulbout) 0.63 else 1,
-    school = if (school) 1.35 else 1   # Value taken from Table 12-29
+    school = if (school) 1.35 else 1   # Value taken from HSM table 12-29
   ))
 }
 
@@ -199,6 +205,7 @@ estimate_crashes <- function(
   validate_inputs(int_type=int_type, aadt_major=aadt_major, aadt_minor=aadt_minor, pedvol=pedvol, nlanes=nlanes, aadt_max=aadt_max, signal_cmf=signal_cmf)
   int_type <- tolower(trimws(int_type))
 
+  # sanitize the spf dataframe to work in this context
   spfs <- spfs |>
     mutate(
       intersection_type = tolower(as.character(intersection_type)),
@@ -231,7 +238,7 @@ estimate_crashes <- function(
 
     fpedi <- NULL
   } else {
-    # regular pedestrian handling
+    # unsignalized pedestrian estimation is just a flat proportion of total crashes
     fpedi <- get_ped_factor(int_type)
     nped_base <- nbi * fpedi
   }
@@ -252,6 +259,7 @@ estimate_crashes <- function(
   ten_year_ped_prob = calc_long_term_ped_accident_probability(pred_ped)
 
   # Return single row data frame with all relevant information
+  # This feels hacky and weird, but to be honest is the easiest way I can think of to contain everything I care about. 
   tibble::tibble(
     intersection_type = int_type,
     lighting = lighting,
@@ -270,8 +278,8 @@ estimate_crashes <- function(
     cmf_veh = cmf_veh,
     cmf_ped = cmf_ped,
     ped_factor = fpedi,
-    pred_veh = pred_veh, #nbi * cmf_product,
-    pred_ped = pred_ped, #nbi * cmf_product * fpedi,
+    pred_veh = pred_veh, 
+    pred_ped = pred_ped, 
     ten_year_ped_prob = ten_year_ped_prob
   )
 }
