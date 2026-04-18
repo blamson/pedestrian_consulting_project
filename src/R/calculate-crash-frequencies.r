@@ -88,4 +88,5 @@ post_mesa_high <- estimate_crashes(
 
 result <- bind_rows(list(base_4th, post_4th, post_4th_signalized, base_mesa_low, base_mesa_high, post_mesa_low, post_mesa_high))
 
-# readr::write_csv(result, "data/initial_results_04-12-2026.csv")
+write <- FALSE
+if (write){readr::write_csv(result, paste0("data/results_", Sys.Date(), ".csv"))}
