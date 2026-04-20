@@ -8,8 +8,10 @@ spfs <- read_csv("data/spfs.csv")
 aadt_max <- readr::read_csv("data/aadt_maximums.csv", show_col_types = FALSE)
 
 print("Calculating estimates for Agate and 4th ---")
+int_name = "Agate & 4th"
 base_4th <- estimate_crashes(
   spfs,
+  int_name = int_name,
   int_type = "4ST",
   aadt_major = 11000,
   aadt_minor = 836,
@@ -20,6 +22,7 @@ base_4th <- estimate_crashes(
 
 post_4th <- estimate_crashes(
   spfs,
+  int_name = int_name,
   int_type = "4ST",
   aadt_major = 11000,
   aadt_minor = 1386,
@@ -31,6 +34,7 @@ post_4th <- estimate_crashes(
 
 post_4th_signalized <- estimate_crashes(
   spfs,
+  int_name = int_name,
   int_type = "4SG",
   aadt_major = 11000,
   aadt_minor = 1386,
@@ -42,9 +46,11 @@ post_4th_signalized <- estimate_crashes(
 )
 
 print("Calculating estimates for Agate and Mesa ---")
+int_name = "Agate & Mesa"
 aadt_minor <- 0.076 * 11000
 base_mesa_low <- estimate_crashes(
   spfs,
+  int_name = int_name,
   int_type = "3ST",
   aadt_major = 11000,
   aadt_minor = aadt_minor,
@@ -55,6 +61,7 @@ base_mesa_low <- estimate_crashes(
 
 post_mesa_low <- estimate_crashes(
   spfs,
+  int_name = int_name,
   int_type = "3ST",
   aadt_major = 11000,
   aadt_minor = aadt_minor,
@@ -67,6 +74,7 @@ post_mesa_low <- estimate_crashes(
 aadt_minor <- 0.166 * 11000
 base_mesa_high <- estimate_crashes(
   spfs,
+  int_name = int_name,
   int_type = "3ST",
   aadt_major = 11000,
   aadt_minor = aadt_minor,
@@ -77,6 +85,7 @@ base_mesa_high <- estimate_crashes(
 
 post_mesa_high <- estimate_crashes(
   spfs,
+  int_name = int_name,
   int_type = "3ST",
   aadt_major = 11000,
   aadt_minor = aadt_minor,

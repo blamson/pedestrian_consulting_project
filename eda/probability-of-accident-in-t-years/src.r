@@ -4,7 +4,7 @@
 # This gives us a lambda=npedi * t
 # We want: 1 - P(0 accidents in 10 years)
 
-calc_probability <- function(num_acc_per_year, years){
+calc_probability <- function(num_acc_per_year=1, years=10){
   # Assumes a constant rate across all years
   # Common input for accidents per year is npedi from hsm output
 

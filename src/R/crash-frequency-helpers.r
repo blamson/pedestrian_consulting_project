@@ -187,6 +187,7 @@ calc_long_term_ped_accident_probability <- function(num_acc_per_year=1, years=10
 
 estimate_crashes <- function(
   spfs,
+  int_name,
   int_type,
   aadt_major,
   aadt_minor,
@@ -261,6 +262,7 @@ estimate_crashes <- function(
   # Return single row data frame with all relevant information
   # This feels hacky and weird, but to be honest is the easiest way I can think of to contain everything I care about. 
   tibble::tibble(
+    intersection_name = int_name,
     intersection_type = int_type,
     lighting = lighting,
     twltl = twltl,
