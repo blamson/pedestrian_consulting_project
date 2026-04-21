@@ -1,10 +1,12 @@
 # Pedestrian Consulting Project
 
-This README is a work in progress and will be updated regularly throughout the course of the project. 
-
 ## Project Summary
 
-N/A
+This project seeks to quantify the reduction in pedestrian risk that is expected to result from the installation of traffic calming measures being installed on two intersections on the main road of Granby Colorado. 
+
+This repository contains a plethora of notes on how to answer this question while following Federal Highway Administration (FHWA) guidelines. 
+
+Initial reporting that kicked off this project were provided by the engineering firm SGM. 
 
 ## Contacts and Ownership
 
@@ -14,39 +16,19 @@ N/A
 
 ## Repository Layout and Navigation
 
-- **`src/`** - Production ready notebooks/scripts. This is where the "final" version of code that is created in `eda/` will go.  
+- **`src/`** - Code used for key output in the project. Taken from `eda/` once work in that directory is complete.  
 - **`data/`** - For all data files. 
-- **`eda/`** - For exploratory and miscellaneous notebooks. Initial variable selection and modeling may also go here. Really think of this as an exploratory directory. We do analysis and find solutions here.
+- **`eda/`** - For exploratory work and miscellaneous notebooks. Initial variable selection and modeling may also go here. Really think of this as an exploratory directory. We do analysis and find solutions here.
 - **`docs/`** - Documents used to support the project. Files, notes, images, etc. 
 
-## Requirements
+## Tech Stack Used
 
-TBD once we have more information.
+Most of this directory is simply markdown notes and images, though some code was used for generating results and plots.
 
-Potential tech stack:
-- python: Version whatever
-- Jupyter: For interactive notebooks
-- Polars: For working with dataframes
-- DuckDB: If we end up with relational data
-- Streamlit: If we want a really basic app to showcase to the client at the end of the project
-
-Managing the environment/dependencies will either be done using Conda or Poetry. 
-
-## Recommended workflow
-
-Unless otherwise agreed upon, all work in this repo should occur on a branch and then merged into main. A branch should be made for specific tasks being worked on. 
-
-To help prevent cluttering, it is also recommended to make a sub-directory for each task. For example, `eda/data_cleaning/`. That directory could contain multiple notebooks or scripts related to that task. 
-
-When code is ready to move into `src/`, the old code in `eda/` is saved there for archival purposes. 
-
-When a task is completed and a branch is ready to be merged into main, update the changelog with anything new. Versioning is likely unnecessary for this project, but the changelog should have name/date at least.
-
-Example:
-
-```
-1/31/2026 - Created repository and README
-- Initial directories and structure set up.
-- README created with basic information included.
-- Brady
-```
+- R version used: 4.5.1
+- R Packages used:
+    - `dplyr`
+    - `tidyr`
+    - `readr`
+    - `ggplot2`
+    - `ggrepel` 
