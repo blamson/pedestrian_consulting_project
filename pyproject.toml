@@ -1,0 +1,19 @@
+[project]
+name = "granby-consulting-project"
+version = "0.1.0"
+description = "A project for quantifying pedestrian risk on two granby intersections."
+authors = [
+    {name = "Your Name",email = "you@example.com"}
+]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "streamlit (>=1.56.0,<2.0.0)",
+    "polars (>=1.40.1,<2.0.0)",
+    "plotly (>=6.7.0,<7.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
