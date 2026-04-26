@@ -457,12 +457,12 @@ def estimate_crashes(
     return {
         "intersection_name": int_name,
         "intersection_type": int_type,
-        "lighting": lighting_cmf,
-        "twltl": twltl_cmf,
-        "bulbout": bulbout_cmf,
+        "lighting_cmf": lighting_cmf,
+        "twltl_cmf": twltl_cmf,
+        "bulbout_cmf": bulbout_cmf,
         "signal_cmf": signal_cmf,
-        "school": school_cmf,
-        "pedvol": pedvol,
+        "school_cmf": school_cmf,
+        "pedvol_cmf": pedvol,
         "nlanes": nlanes,
         "aadt_maj": aadt_major,
         "aadt_minor": aadt_minor,
@@ -480,8 +480,10 @@ def estimate_crashes(
     }
 
 
-aadt_max = pl.read_csv("data/aadt_maximums.csv")
-spfs = pl.read_csv("data/spfs.csv")
-x = estimate_crashes(spfs=spfs, aadt_max=aadt_max, int_name="Agate & 4th", int_type="4st", aadt_major=11000, aadt_minor=836)
-for key, value in x.items():
-    print(key, value)
+
+
+# aadt_max = pl.read_csv("data/aadt_maximums.csv")
+# spfs = pl.read_csv("data/spfs.csv")
+# x = estimate_crashes(spfs=spfs, aadt_max=aadt_max, int_name="Agate & 4th", int_type="4st", aadt_major=11000, aadt_minor=836)
+# for key, value in x.items():
+#     print(key, value)
