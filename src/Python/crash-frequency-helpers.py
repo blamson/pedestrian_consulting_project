@@ -5,7 +5,22 @@ from scipy.stats import poisson
 
 
 def is_missing_like(x) -> bool:
-    # None
+    """
+    Determine whether an input should be treated as "missing-like".
+
+    This function generalizes missingness across several input types:
+    - None
+    - NaN (scalar float)
+    - Empty iterables (list, tuple)
+    - Iterables containing only None or NaN
+    - Polars Series that are empty or entirely null/NaN
+
+    Args:
+        x: Input value to evaluate.
+
+    Returns:
+        bool: True if the input is considered missing-like, False otherwise.
+    """
     if x is None:
         return True
 
@@ -32,6 +47,19 @@ def is_missing_like(x) -> bool:
 
 
 def stop_if_missing_like(variable_name, value) -> None:
+    """
+    Raise an error if a value is considered "missing-like".
+
+    This is a guard function that wraps `is_missing_like` and provides
+    a standardized error message for invalid inputs.
+
+    Args:
+        variable_name (str): Name of the variable being validated.
+        value: Value to check.
+
+    Raises:
+        ValueError: If `value` is missing-like.
+    """
     if is_missing_like(value):
         raise ValueError(f"{variable_name} is missing or invalid")
 
@@ -45,7 +73,82 @@ def validate_inputs(
   pedvol = None, 
   nlanes = None
 ) -> None:
-    print(int_type)
+    """
+    Validate inputs for intersection crash prediction models.
+
+    Performs consistency and domain checks across:
+    - Required inputs (non-missing)
+    - Supported intersection types
+    - Signalized intersection constraints
+    - AADT ordering and upper bounds
+
+    Args:
+        int_type (str): Intersection type identifier (must exist in `aadt_max`).
+        aadt_major (int): Major road AADT; must be positive and within limits.
+        aadt_minor (int): Minor road AADT; must be positive, <= major, and within limits.
+        aadt_max (pl.DataFrame): Lookup table containing maximum allowable AADT
+            values by intersection type. Must contain columns:
+            ["intersection_type", "aadt_major", "aadt_minor"].
+        signal_cmf (bool): Whether a signal CMF is applied.
+        pedvol (int, optional): Pedestrian volume (required for signalized SPFs).
+        nlanes (int, optional): Number of lanes (required for signalized SPFs).
+
+    Raises:
+        ValueError:
+            - If required inputs are missing-like
+            - If `int_type` is unsupported
+            - If signalized SPF constraints are violated
+            - If AADT values are non-positive, misordered, or exceed limits
+            - If `aadt_max` does not contain exactly one row for `int_type`
+
+    Returns:
+        None
+    """
+    
+    # Existence checks
+    stop_if_missing_like("int_type", int_type)
+    stop_if_missing_like("aadt_major", aadt_major)
+    stop_if_missing_like("aadt_minor", aadt_minor)
+    stop_if_missing_like("aadt_max", aadt_max)
+
+    available_int_types = set(aadt_max["intersection_type"].to_list())
+    if int_type not in available_int_types:
+        raise ValueError(f"Unsupported intersection type: {int_type}")
+    
+    # Signalized SPF checks
+    if int_type in ["3sg", "4sg"]:
+        stop_if_missing_like("pedvol", pedvol)
+        stop_if_missing_like("nlanes", nlanes)
+        if signal_cmf:
+            raise ValueError("signal_cmf cannot be applied when using a signalized spf")
+
+        if nlanes <= 0:
+            raise ValueError(f"nlanes must be a positive value: {nlanes}")
+        if pedvol <= 0:
+            raise ValueError(f"pedvol must be a positive value: {pedvol}")
+
+    # AADT Checks
+    if aadt_minor <= 0 or aadt_major <= 0:
+        raise ValueError(f"AADT variables must be positive values. aadt_minor: {aadt_minor}, aadt_major: {aadt_major}")
+
+    aadt_limits = aadt_max.filter(pl.col("intersection_type") == int_type)
+    limit_rows = aadt_limits.height
+    if limit_rows != 1:
+        raise ValueError(f"Expected exactly one row for {int_type} in aadt_max dataset") 
+    
+    if aadt_minor > aadt_major:
+        raise ValueError(f"aadt_minor exceeds aadt_major: {aadt_minor} > {aadt_major}")
+    
+    major_limit = aadt_limits["aadt_major"].item()
+    minor_limit = aadt_limits["aadt_minor"].item()
+
+    if aadt_major > major_limit:
+        raise ValueError(f"aadt_major exceeds limit for {int_type}: {aadt_major} > {major_limit}")
+    
+    if aadt_minor > minor_limit:
+        raise ValueError(f"aadt_minor exceeds limit for {int_type}: {aadt_minor} > {minor_limit}")
+
+    return None
 
 
 def compute_vehicle_spf(
@@ -53,6 +156,20 @@ def compute_vehicle_spf(
     aadt_major: int, 
     aadt_minor: int
 ) -> float: 
+    """
+    Computes the base expected frequency of a given crash type for vehicles.
+    This SPF is used for stop controlled intersections.
+    Sources:
+        HSM equations 12-21 and 12-24
+
+    Args:
+        `spf_row`: A single row of a polars dataframe containing the coefficients a through c
+        `aadt_major`: Major road AADT
+        `aadt_minor`: Minor road AADT
+
+    Returns:
+        float: Expected number of vehicle crashes per year
+    """
 
     return exp(
         spf_row["a"].item() +
@@ -71,14 +188,17 @@ def compute_signalized_pedestrian_spf(
     """
     Computes the base expected crash frequency per year for pedestrians.
     This SPF only works for signalized intersections as those are the only ones with the necessary coefficients. 
-    Source: HSM formula 12-29
+    
+    Sources: 
+        HSM equation 12-29
+        SPFs commonly used taken from HSM table 12-14
 
     Args:
-        spf_row: A single row of a polars dataframe containing the coefficients a through e
-        aadt_major: Major road AADT
-        aadt_minor: Minor road AADT
-        pedvol: Daily pedestrian volume
-        nlanes: Maximum number of lanes crossed by pedestrians
+        `spf_row`: A single row of a polars dataframe containing the coefficients a through e
+        `aadt_major`: Major road AADT
+        `aadt_minor`: Minor road AADT
+        `pedvol`: Daily pedestrian volume
+        `nlanes`: Maximum number of lanes crossed by pedestrians
 
     Returns:
         float: Expected number of pedestrian crashes per year
@@ -118,7 +238,7 @@ def compute_cmfs(
         lighting, twltl and signal are ALL CRASH cmfs
         bulbout and school are PEDESTRIAN cmfs
 
-        calc_ped_cmf: Dictates which set of cmfs can even be considered
+        `calc_ped_cmf`: Dictates which set of cmfs can even be considered
 
     Returns:
         float: Product of all cmf values for given set of accident types
@@ -152,7 +272,7 @@ def get_pedestrian_factor(
         HSM Table 12-16
 
     Args:
-        int_type: 4st or 3st
+        `int_type`: 4st or 3st
 
     Returns: 
         Pedestrian crash adjustment factor for stop controlled intersections.
@@ -184,8 +304,8 @@ def calc_long_run_accident_probability(
         where theta = num_accidents_per_year * years
     
     Args:
-        num_accidents_per_year: Expected accidents per year. Must be positive.
-        years: Integer number of years, must be at least 1. 
+        `num_accidents_per_year`: Expected accidents per year. Must be positive.
+        `years`: Integer number of years, must be at least 1. 
 
     Returns:
         Probability of at least one accident in t years
@@ -212,19 +332,73 @@ def estimate_crashes(
     aadt_minor,
     aadt_max = None,
     years = 10,
-    # Signalized only variables ---
     pedvol=None,
     nlanes=None,
-    # CMFs ---
     lighting_cmf=True,
     twltl_cmf=True,
     signal_cmf=False,
-    # Pedestrian only CMFs ---
     bulbout_cmf=False,
-    school_cmf=False # pedestrian and signalized only
+    school_cmf=False
 ) -> dict:
+    """
+    Estimate expected vehicle and pedestrian crashes for an intersection.
+
+    This function applies Safety Performance Functions (SPFs) and Crash
+    Modification Factors (CMFs) to compute:
+    - Baseline multi-vehicle and single-vehicle crash frequencies
+    - Pedestrian crash frequency (via SPF or proportional factor)
+    - Adjusted crash predictions under selected CMFs
+    - Long-run probability of at least one pedestrian crash over a time horizon
+
+    Workflow:
+    1. Validate inputs and normalize `int_type`.
+    2. Subset SPF data by intersection and crash type.
+    3. Compute baseline vehicle crashes (multi-vehicle + single-vehicle).
+    4. Compute baseline pedestrian crashes:
+       - Signalized intersections: SPF-based
+       - Unsignalized intersections: proportional to total vehicle crashes
+    5. Apply CMFs to adjust vehicle and pedestrian predictions.
+    6. Compute long-run pedestrian crash probability over `years`.
+
+    Args:
+        `spfs` (pl.DataFrame): SPF dataset containing at minimum:
+            ["intersection_type", "crash_type", ... model parameters ...].
+        `int_name` (str): Identifier for the intersection.
+        `int_type` (str): Intersection type (case/whitespace insensitive).
+        `aadt_major` (int): Major road AADT.
+        `aadt_minor` (int): Minor road AADT.
+        `aadt_max` (pl.DataFrame, optional): Lookup table of maximum allowable
+            AADT values by intersection type.
+        `years` (int, default=10): Time horizon for probability calculation.
+        `pedvol` (int, optional): Pedestrian volume (required for signalized SPFs).
+        `nlanes` (int, optional): Number of lanes (required for signalized SPFs).
+        `lighting_cmf` (bool, default=True): Apply lighting CMF.
+        `twltl_cmf` (bool, default=True): Apply two-way left-turn lane CMF.
+        `signal_cmf` (bool, default=False): Apply signal CMF (unsignalized only).
+        `bulbout_cmf` (bool, default=False): Apply bulb-out CMF (pedestrian).
+        `school_cmf` (bool, default=False): Apply school-zone CMF (pedestrian).
+
+    Returns:
+        dict: Dictionary of inputs, intermediate quantities, and outputs, including:
+            - Baseline crashes: "nbi_mv", "nbi_sv", "nbi_all", "nped_base"
+            - CMFs: "cmf_veh", "cmf_ped"
+            - Predictions: "pred_veh", "pred_ped"
+            - Long-run probability: "long_run_ped_prob"
+            - Metadata and inputs
+
+    Raises:
+        ValueError: If input validation fails (see `validate_inputs`).
+
+    Notes:
+        - Pedestrian crash estimation differs structurally between signalized
+          ("3sg", "4sg") and unsignalized intersection types.
+        - CMFs are applied multiplicatively.
+        - Long-run probability assumes a Poisson process with rate `pred_ped`.
+    """
 
     int_type = "".join(int_type.split()).lower()
+
+    validate_inputs(int_type, aadt_major, aadt_minor, aadt_max, signal_cmf, pedvol, nlanes)
 
     # Clean up int and crash columns to be easier to work with
     spfs = (
@@ -306,7 +480,8 @@ def estimate_crashes(
     }
 
 
+aadt_max = pl.read_csv("data/aadt_maximums.csv")
 spfs = pl.read_csv("data/spfs.csv")
-x = estimate_crashes(spfs=spfs, int_name="Agate & 4th", int_type="4st", aadt_major=11000, aadt_minor=836)
+x = estimate_crashes(spfs=spfs, aadt_max=aadt_max, int_name="Agate & 4th", int_type="4st", aadt_major=11000, aadt_minor=836)
 for key, value in x.items():
     print(key, value)
