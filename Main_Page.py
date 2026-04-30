@@ -1,5 +1,7 @@
 import streamlit as st
 import polars as pl
+import numpy as np
+import plotly.express as px
 from src.risk_estimation import crash_frequency_helpers as risk_mod, streamlit_helpers as helpers
 # import src.risk_estimation
 
@@ -47,6 +49,7 @@ st.sidebar.number_input(
     label=f"Agate Daily Traffic Volume (AADT) - Default: {DEFAULT_MAJOR_AADT} - Maximum: {MAX_MAJOR_AADT}",
     min_value=1,
     max_value=MAX_MAJOR_AADT,
+    step=5000,
     value=DEFAULT_MAJOR_AADT,
     key="aadt_major"
 )
@@ -64,6 +67,15 @@ st.sidebar.slider(
 )
 
 st.session_state.aadt_minor = round(st.session_state.aadt_major * st.session_state.minor_aadt_percent / 100, 2)
+
+st.sidebar.header("Other Parameters")
+years = st.sidebar.number_input(
+    label="Select number of years for long run probability",
+    min_value=1,
+    max_value=100,
+    value=10,
+    key="years"
+)
 
 st.sidebar.header("Intersection Treatments")
 twltl_cmf = st.sidebar.checkbox(
@@ -97,7 +109,8 @@ baseline_results = risk_mod.estimate_crashes(
     int_type=int_type,
     aadt_major=st.session_state.aadt_major,
     aadt_minor=st.session_state.aadt_minor,
-    aadt_max=aadt_limit_table
+    aadt_max=aadt_limit_table,
+    years=years
 )
 
 results = risk_mod.estimate_crashes(
@@ -111,14 +124,78 @@ results = risk_mod.estimate_crashes(
     bulbout_cmf=bulbout_cmf,
     lighting_cmf=lighting_cmf,
     signal_cmf=signal_cmf,
+    school_cmf=school_cmf,
+    years=years
+)
+
+st.sidebar.header("Developer Controls")
+developer_view = st.sidebar.checkbox(
+    label="Show detailed outputs and logs",
+    value=True
+)
+
+if developer_view:
+    col1, col2 = st.columns(2)
+
+    col1.header("Results - Baseline")
+    col1.write(baseline_results)
+
+    col2.header("Results - Post Treatment")
+    col2.write(results)
+
+
+aadt_sweep_results = risk_mod.sweep_aadt_major(
+    spf_table,
+    int_name=intersection,
+    int_type=int_type,
+    aadt_max=aadt_limit_table,
+    aadt_major_min = 1,
+    # aadt_major_max = MAX_MAJOR_AADT,
+    aadt_major_max=st.session_state.aadt_major,
+    years=years,
+    k=st.session_state.minor_aadt_percent / 100,
+    twltl_cmf=twltl_cmf,
+    bulbout_cmf=bulbout_cmf,
+    lighting_cmf=lighting_cmf,
+    signal_cmf=signal_cmf,
     school_cmf=school_cmf
 )
 
+st.header("Testing value sweeps")
 col1, col2 = st.columns(2)
 
-col1.header("Results - Baseline")
-col1.write(baseline_results)
+col1.header(f"{years} Year Crash Probability as Traffic Volume Increases")
+# st.dataframe(results)
+fig = px.area(aadt_sweep_results, x="aadt_major", y=f"{years}_year_crash_probability")
+fig.update_layout(yaxis_range=[0,1])
+col1.write(fig)
 
-col2.header("Results - Post Treatment")
-col2.write(results)
-# st.write(spf_table)
+col2.header(f"How {minor_road} Volume Increases With Agate Volume")
+proportions = [0.076, 0.164]
+fig = px.area(aadt_sweep_results, x="aadt_major", y="aadt_minor")
+fig.update_layout(yaxis_range=[0, aadt_limits["aadt_minor"].item()])
+col2.write(fig)
+
+st.header("Testing alternate sweeping function")
+
+test = risk_mod.sweep_estimates(
+    spfs=spf_table,
+    int_name=intersection,
+    int_type=int_type,
+    aadt_max=aadt_limit_table,
+    aadt_major_vals=[st.session_state.aadt_major],
+    k_vals=[st.session_state.minor_aadt_percent / 100],
+    years_vals=np.arange(1, years+1, 1),
+    twltl_cmf=twltl_cmf,
+    bulbout_cmf=bulbout_cmf,
+    lighting_cmf=lighting_cmf,
+    signal_cmf=signal_cmf,
+    school_cmf=school_cmf
+)
+
+fig = px.area(test, x="years", y="long_run_ped_prob")
+fig.update_layout(yaxis_range=[0, 1])
+st.write(fig)
+
+if developer_view:
+    st.write(test)

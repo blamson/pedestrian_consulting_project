@@ -1,6 +1,7 @@
 import polars as pl
 import math
 from math import exp, log, prod
+import numpy as np
 from scipy.stats import poisson
 
 
@@ -317,8 +318,8 @@ def calc_long_run_accident_probability(
     if num_accidents_per_year <= 0:
         raise ValueError(f"Expected accidents must be a positive value. Provided: {num_accidents_per_year}")
 
-    if years <= 1:
-        raise ValueError(f"Years must be a positive value at least 1. Provided: {years}")
+    if years < 1:
+        raise ValueError(f"Years must be a positive value of at least 1. Provided: {years}")
 
     theta = num_accidents_per_year * years
     return 1 - poisson.pmf(0, theta)
@@ -480,10 +481,110 @@ def estimate_crashes(
     }
 
 
+def sweep_aadt_major(
+    spfs,
+    int_name,
+    int_type,
+    aadt_max,
+    aadt_major_min,
+    aadt_major_max,
+    k,
+    years=10,
+    steps=50,
+    **fixed_inputs
+) -> pl.DataFrame:
+
+    aadt_major_grid = np.linspace(aadt_major_min, aadt_major_max, steps)
+
+    rows = []
+    aadt_limits = aadt_max.filter(pl.col("intersection_type") == int_type)
+    for aadt_major in aadt_major_grid:
+        aadt_minor = k * aadt_major
+        if aadt_minor <= aadt_limits["aadt_minor"].item():
+            result = estimate_crashes(
+                spfs=spfs,
+                int_name=int_name,
+                int_type=int_type,
+                aadt_major=float(aadt_major),
+                aadt_minor=float(aadt_minor),
+                aadt_max=aadt_max,
+                years=years,
+                **fixed_inputs
+            )
+
+            rows.append({
+                "aadt_major": float(aadt_major),
+                "aadt_minor": float(aadt_minor),
+                "pred_ped": result["pred_ped"],
+                f"{years}_year_crash_probability": result["long_run_ped_prob"]
+            })
+
+    return pl.DataFrame(rows)
+
+
+def _to_list(x):
+    if x is None:
+        return None
+    if isinstance(x, (list, tuple)):
+        return list(x)
+    if isinstance(x, range):
+        return list(x)
+    if isinstance(x, np.ndarray):
+        return x.tolist()
+    return [x]  # scalar fallback
+
+
+def sweep_estimates(
+    spfs: pl.DataFrame,
+    int_name,
+    int_type,
+    aadt_major_vals,
+    k_vals=None,
+    years_vals=None,
+    **kwargs
+) -> pl.DataFrame:
+
+    aadt_major_vals = _to_list(aadt_major_vals) or [kwargs.get("aadt_major")]
+    k_vals = _to_list(k_vals) or [kwargs.get("k", 0.3)]
+    years_vals = _to_list(years_vals) or [kwargs.get("years", 10)]
+
+    # Build parameter grid
+    grid = (
+        pl.DataFrame({"aadt_major": aadt_major_vals})
+        .join(pl.DataFrame({"k": k_vals}), how="cross")
+        .join(pl.DataFrame({"years": years_vals}), how="cross")
+        .with_columns(
+            (pl.col("aadt_major") * pl.col("k")).alias("aadt_minor")
+        )
+    )
+
+    rows = grid.to_dicts()
+
+    results = [
+        {
+            **row,
+            **estimate_crashes(
+                spfs=spfs,
+                int_name=int_name,
+                int_type=int_type,
+                aadt_major=row["aadt_major"],
+                aadt_minor=row["aadt_minor"],
+                years=row["years"],
+                **kwargs
+            )
+        }
+        for row in rows
+    ]
+
+    results = pl.DataFrame(results)
+    return(results)
 
 
 # aadt_max = pl.read_csv("data/aadt_maximums.csv")
 # spfs = pl.read_csv("data/spfs.csv")
+# results = sweep_aadt_major(spfs=spfs, int_name="Agate & 4th", int_type="4st", aadt_major_min=1000, aadt_major_max=11000, k=0.076, steps=50, aadt_max=aadt_max)
+# print(results)
+# print()
 # x = estimate_crashes(spfs=spfs, aadt_max=aadt_max, int_name="Agate & 4th", int_type="4st", aadt_major=11000, aadt_minor=836)
 # for key, value in x.items():
 #     print(key, value)
