@@ -15,7 +15,7 @@ def combine_results(results: List[Dict]) -> pl.DataFrame:
     return pl.DataFrame(results)
 
 
-# @st.cache_data
+@st.cache_data
 def load_text(path):
     text = ""
     with open(path) as f:

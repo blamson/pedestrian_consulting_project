@@ -20,7 +20,8 @@ def make_accident_bar(df, y_col, title, y_label, color_map, key):
     fig.update_traces(
         textposition="outside",
         texttemplate="%{text:.3f}",
-        marker=dict(color=[color_map[s] for s in df["scenario"]])
+        # marker=dict(color=[color_map[s] for s in df["scenario"]])
+        marker=dict(color=px.colors.qualitative.Vivid)
     )
 
     return fig, key

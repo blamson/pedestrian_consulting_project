@@ -10,7 +10,7 @@ st.set_page_config(layout="wide")
 st.title("Interactive Dashboad")
 
 # Data loading ---
-results_table = helpers.load_data("data/results/results_2026-04-19.csv")
+# results_table = helpers.load_data("data/results/results_2026-04-19.csv") # currently unused, will be important for pre-set scenarios?
 aadt_limit_table = helpers.load_data("data/aadt_maximums.csv")
 spf_table = helpers.load_data("data/spfs.csv")
 
@@ -93,6 +93,7 @@ figcol2.plotly_chart(fig2, key=key2)
 st.header("Long term pedestrian risk")
 text = helpers.load_text("pages/text_files/main_page/long-term-risk.md")
 st.markdown(text)
+years_figcol1, years_figcol2 = st.columns(2)
 
 fig = px.bar(
     results_df, 
@@ -108,7 +109,55 @@ fig = px.bar(
 fig.update_traces(
     textposition="outside",
     texttemplate="%{text:.0f}%",
+    marker=dict(color=px.colors.qualitative.Vivid)
+)
+fig.update_layout(yaxis_range=[0, 100])
+years_figcol1.plotly_chart(fig, key="long_term_risk_plot")
+
+# LONG TERM RISK - YEAR SWEEP SECTION 
+baseline_year_sweep = risk_mod.sweep_across_years(
+    spfs=spf_table,
+    int_name=config["intersection"],
+    int_type=config["int_type"],
+    aadt_major=config["aadt_major"],
+    aadt_minor=config["aadt_minor"],
+    aadt_max=aadt_limit_table,
+    scenario_name="baseline"
+)
+
+post_year_sweep = risk_mod.sweep_across_years(
+    spfs=spf_table,
+    int_name=config["intersection"],
+    int_type=config["int_type"],
+    aadt_major=config["aadt_major"],
+    aadt_minor=config["aadt_minor"],
+    aadt_max=aadt_limit_table,
+    scenario_name="post-treatment",
+    **config["cmf"]
+)
+
+year_sweep_df = (
+    pl.concat([baseline_year_sweep, post_year_sweep])
+    .with_columns(long_run_ped_percent=pl.col("long_run_ped_prob")*100)
+    .with_columns(long_run_ped_percent=pl.col("long_run_ped_percent").round(2))
+)
+
+fig = px.line(
+    year_sweep_df, 
+    x="years", 
+    y="long_run_ped_percent", 
+    color="scenario",
+    title="Chance of at least one accident over time",
+    color_discrete_sequence=px.colors.qualitative.Vivid,
+    labels={
+        "years": "Years",
+        "scenario": "Scenario",
+        "long_run_ped_percent": "Chance of an accident (%)"
+    }
+)
+fig.add_vline(x=config["years"], line_width=1, line_dash="dash", line_color="red", annotation_text=f"Years Selected: {config["years"]}")
+fig.update_traces(
     marker=dict(color=[color_map[s] for s in results_df["scenario"]])
 )
 fig.update_layout(yaxis_range=[0, 100])
-st.plotly_chart(fig, key="long_term_risk_plot")
+years_figcol2.plotly_chart(fig, key="year_line_plot")

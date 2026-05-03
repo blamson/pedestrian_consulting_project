@@ -253,15 +253,15 @@ def compute_cmfs(
 
     if calc_ped_cmf:
         factors = {
-            "bulbout": 0.63 if bulbout_cmf else 1,
-            "school": 1.35 if school_cmf else 1
+            "bulbout": 0.63 if bulbout_cmf else 1.0,
+            "school": 1.35 if school_cmf else 1.0
         }
 
     else:
         factors = {
-            "lighting": 0.91 if lighting_cmf else 1,
-            "twltl": 0.92 if twltl_cmf else 1,
-            "signal_cmf": 0.77 if signal_cmf else 1
+            "lighting": 0.91 if lighting_cmf else 1.0,
+            "twltl": 0.92 if twltl_cmf else 1.0,
+            "signal_cmf": 0.77 if signal_cmf else 1.0
         }
 
     return prod(factors.values())
@@ -530,59 +530,38 @@ def sweep_aadt_major(
     return pl.DataFrame(rows)
 
 
-def _to_list(x):
-    if x is None:
-        return None
-    if isinstance(x, (list, tuple)):
-        return list(x)
-    if isinstance(x, range):
-        return list(x)
-    if isinstance(x, np.ndarray):
-        return x.tolist()
-    return [x]  # scalar fallback
-
-
-def sweep_estimates(
+def sweep_across_years(
     spfs: pl.DataFrame,
     int_name,
     int_type,
-    aadt_major_vals,
-    k_vals=None,
-    years_vals=None,
+    aadt_major,
+    aadt_minor,
+    aadt_max,
+    scenario_name,
     **kwargs
 ) -> pl.DataFrame:
-
-    aadt_major_vals = _to_list(aadt_major_vals) or [kwargs.get("aadt_major")]
-    k_vals = _to_list(k_vals) or [kwargs.get("k", 0.3)]
-    years_vals = _to_list(years_vals) or [kwargs.get("years", 10)]
-
-    # Build parameter grid
-    grid = (
-        pl.DataFrame({"aadt_major": aadt_major_vals})
-        .join(pl.DataFrame({"k": k_vals}), how="cross")
-        .join(pl.DataFrame({"years": years_vals}), how="cross")
-        .with_columns(
-            (pl.col("aadt_major") * pl.col("k")).alias("aadt_minor")
-        )
+    logger.info("Beginning sweep across years")
+    risk_estimates = estimate_crashes(
+        spfs=spfs, 
+        int_name=int_name, 
+        int_type=int_type, 
+        aadt_major=aadt_major, 
+        aadt_minor=aadt_minor, 
+        scenario_name=scenario_name, 
+        aadt_max=aadt_max,
+        **kwargs
     )
 
-    rows = grid.to_dicts()
+    rows = []
+    pred_ped = risk_estimates["pred_ped"]
+    pred_veh = risk_estimates["pred_veh"]
+    for year in np.arange(1, 101, 1):
+        if year in [1, 25, 50, 75, 100]:
+            logger.debug(f"Sweep step {year}")
+        new_row = risk_estimates.copy()
+        new_row["years"] = year
+        new_row["long_run_ped_prob"] = calc_long_run_accident_probability(pred_ped, year)
+        new_row["long_run_veh_prob"] = calc_long_run_accident_probability(pred_veh, year)
+        rows.append(new_row)
 
-    results = [
-        {
-            **row,
-            **estimate_crashes(
-                spfs=spfs,
-                int_name=int_name,
-                int_type=int_type,
-                aadt_major=row["aadt_major"],
-                aadt_minor=row["aadt_minor"],
-                years=row["years"],
-                **kwargs
-            )
-        }
-        for row in rows
-    ]
-
-    results = pl.DataFrame(results)
-    return(results)
+    return pl.DataFrame(rows)
