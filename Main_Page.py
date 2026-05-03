@@ -98,10 +98,12 @@ if int_type not in ["3sg", "4sg"]:
         value=False
     )
 
-school_cmf = st.sidebar.checkbox(
-    label="Nearby School",
-    value=False
-    )
+school_cmf=False
+if int_type in ["3sg", "4sg"]:
+    school_cmf = st.sidebar.checkbox(
+        label="Nearby School",
+        value=False
+        )
 
 baseline_results = risk_mod.estimate_crashes(
     spfs=spf_table, 
@@ -110,7 +112,8 @@ baseline_results = risk_mod.estimate_crashes(
     aadt_major=st.session_state.aadt_major,
     aadt_minor=st.session_state.aadt_minor,
     aadt_max=aadt_limit_table,
-    years=years
+    years=years,
+    scenario_name="baseline"
 )
 
 results = risk_mod.estimate_crashes(
@@ -125,8 +128,11 @@ results = risk_mod.estimate_crashes(
     lighting_cmf=lighting_cmf,
     signal_cmf=signal_cmf,
     school_cmf=school_cmf,
-    years=years
+    years=years,
+    scenario_name="post-treatment"
 )
+
+results_df = helpers.combine_results([baseline_results, results])
 
 st.sidebar.header("Developer Controls")
 developer_view = st.sidebar.checkbox(
@@ -142,6 +148,8 @@ if developer_view:
 
     col2.header("Results - Post Treatment")
     col2.write(results)
+
+    st.write(results_df)
 
 
 aadt_sweep_results = risk_mod.sweep_aadt_major(
@@ -185,7 +193,7 @@ test = risk_mod.sweep_estimates(
     aadt_max=aadt_limit_table,
     aadt_major_vals=[st.session_state.aadt_major],
     k_vals=[st.session_state.minor_aadt_percent / 100],
-    years_vals=np.arange(1, years+1, 1),
+    years_vals=np.arange(1, 101, 1),
     twltl_cmf=twltl_cmf,
     bulbout_cmf=bulbout_cmf,
     lighting_cmf=lighting_cmf,
@@ -197,5 +205,5 @@ fig = px.area(test, x="years", y="long_run_ped_prob")
 fig.update_layout(yaxis_range=[0, 1])
 st.write(fig)
 
-if developer_view:
-    st.write(test)
+# if developer_view:
+#     st.write(test)

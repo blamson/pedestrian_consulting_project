@@ -3,6 +3,7 @@ import math
 from math import exp, log, prod
 import numpy as np
 from scipy.stats import poisson
+from loguru import logger
 
 
 def is_missing_like(x) -> bool:
@@ -72,7 +73,8 @@ def validate_inputs(
   aadt_max: int,
   signal_cmf: bool,
   pedvol = None, 
-  nlanes = None
+  nlanes = None,
+  scenario="Not Specified"
 ) -> None:
     """
     Validate inputs for intersection crash prediction models.
@@ -101,11 +103,14 @@ def validate_inputs(
             - If signalized SPF constraints are violated
             - If AADT values are non-positive, misordered, or exceed limits
             - If `aadt_max` does not contain exactly one row for `int_type`
+        Warning:
+            - If AADT values exceed their model specific limits
 
     Returns:
         None
     """
     
+    logger.info(f"Validating inputs for scenario <{scenario}>...")
     # Existence checks
     stop_if_missing_like("int_type", int_type)
     stop_if_missing_like("aadt_major", aadt_major)
@@ -144,11 +149,12 @@ def validate_inputs(
     minor_limit = aadt_limits["aadt_minor"].item()
 
     if aadt_major > major_limit:
-        raise ValueError(f"aadt_major exceeds limit for {int_type}: {aadt_major} > {major_limit}")
+        logger.warning(f"aadt_major exceeds model specific limit for {int_type}: {aadt_major} > {major_limit}")
     
     if aadt_minor > minor_limit:
-        raise ValueError(f"aadt_minor exceeds limit for {int_type}: {aadt_minor} > {minor_limit}")
+        logger.warning(f"aadt_minor exceeds model specific limit for {int_type}: {aadt_minor} > {minor_limit}")
 
+    logger.success("All checks passed")
     return None
 
 
@@ -331,6 +337,7 @@ def estimate_crashes(
     int_type,
     aadt_major,
     aadt_minor,
+    scenario_name="baseline",
     aadt_max = None,
     years = 10,
     pedvol=None,
@@ -399,7 +406,7 @@ def estimate_crashes(
 
     int_type = "".join(int_type.split()).lower()
 
-    validate_inputs(int_type, aadt_major, aadt_minor, aadt_max, signal_cmf, pedvol, nlanes)
+    validate_inputs(int_type, aadt_major, aadt_minor, aadt_max, signal_cmf, pedvol, nlanes, scenario=scenario_name)
 
     # Clean up int and crash columns to be easier to work with
     spfs = (
@@ -458,6 +465,7 @@ def estimate_crashes(
     return {
         "intersection_name": int_name,
         "intersection_type": int_type,
+        "scenario": scenario_name,
         "lighting_cmf": lighting_cmf,
         "twltl_cmf": twltl_cmf,
         "bulbout_cmf": bulbout_cmf,
@@ -578,13 +586,3 @@ def sweep_estimates(
 
     results = pl.DataFrame(results)
     return(results)
-
-
-# aadt_max = pl.read_csv("data/aadt_maximums.csv")
-# spfs = pl.read_csv("data/spfs.csv")
-# results = sweep_aadt_major(spfs=spfs, int_name="Agate & 4th", int_type="4st", aadt_major_min=1000, aadt_major_max=11000, k=0.076, steps=50, aadt_max=aadt_max)
-# print(results)
-# print()
-# x = estimate_crashes(spfs=spfs, aadt_max=aadt_max, int_name="Agate & 4th", int_type="4st", aadt_major=11000, aadt_minor=836)
-# for key, value in x.items():
-#     print(key, value)

@@ -1,0 +1,7 @@
+Bulbout
+- Also known as a curb extension.
+- Extends width of curb or sidewalk into the road, narrowing roadway and increasing pedestrian visibility.
+- CMF Value: 0.63. Reduces crashes by 37%.
+- CMF Clearinghouse ID: 1786
+- Crash Types: Pedestrian
+- Link: https://cmfclearinghouse.fhwa.dot.gov/detail.php?facid=1786
