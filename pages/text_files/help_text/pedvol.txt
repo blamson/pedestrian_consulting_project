@@ -1,0 +1,5 @@
+Daily Pedestrian Volume
+- Average number of pedestrians crossing the intersection per day.
+- Approximated from peak hourly volume observed by SGM.
+- NOTE: Only applies to direct pedestrian estimates. 
+- As such, this number will not impact vehicle crash rates.

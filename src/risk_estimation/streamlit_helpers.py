@@ -41,11 +41,22 @@ def build_sidebar(aadt_limit_table: pl.DataFrame):
         minor_road = "Mesa"
         DEFAULT_TRAFFIC_PERCENT = 7.6
         bulbout=True
+        disable_minor_volume = False
+        disable_direct_estimation = True
     else:
         int_type = "4st"
         minor_road = "4th"
         DEFAULT_TRAFFIC_PERCENT = 7.6
         bulbout=False
+        disable_minor_volume = True
+        disable_direct_estimation = False
+        signal=True
+        # scenarios = [
+        #     {"int_type": "4st", "estimation_type": "indirect", "DEFAULT_TRAFFIC_PERCENT": 7.6},
+        #     {"int_type": "4st", "estimation_type": "indirect", "DEFAULT_TRAFFIC_PERCENT": 12.6},
+        #     {"int_type": "4sg", "estimation_type": "direct", "DEFAULT_TRAFFIC_PERCENT": 12.6}
+        # ]
+
 
     aadt_limits = aadt_limit_table.filter(
         pl.col("intersection_type") == int_type
@@ -83,8 +94,11 @@ def build_sidebar(aadt_limit_table: pl.DataFrame):
         value=DEFAULT_TRAFFIC_PERCENT,
         key="minor_aadt_percent",
         format="%.1f",
-        help=help_text
-)
+        help=help_text,
+        disabled=disable_minor_volume
+    )
+    if disable_minor_volume:
+        st.sidebar.warning("Minor volume adjustment available only for Agate & Mesa.")
 
     aadt_minor = round(
         st.session_state.aadt_major
@@ -95,18 +109,39 @@ def build_sidebar(aadt_limit_table: pl.DataFrame):
     st.sidebar.write(f"{minor_road} Traffic Volume: {int(aadt_minor)}")
 
     if aadt_minor > aadt_limits["aadt_minor"].item():
-        st.sidebar.warning(f"Minor road volume exceeds limit of {aadt_limits["aadt_minor"].item()} supported by traffic model, results will be less reliable.")
+        st.sidebar.warning(f"Minor road volume exceeds limit of {aadt_limits['aadt_minor'].item()} supported by traffic model, results will be less reliable.")
 
     # --- Other params ---
     st.sidebar.header("Other Parameters")
-    help_text = load_text("pages/text_files/help_text/years.txt")
     years = st.sidebar.number_input(
         "Years",
         min_value=1,
         max_value=100,
         value=10,
         key="years",
-        help=help_text
+        help=load_text("pages/text_files/help_text/years.txt")
+    )
+
+    st.sidebar.header("Direct Estimation Parameters", help="Direct estimation only available for Agate & 4th")
+    pedvol = st.sidebar.number_input(
+        label="Daily Pedestrian Volume",
+        min_value=1,
+        max_value=1000,
+        value=138,
+        step=100,
+        key="pedvol",
+        disabled=disable_direct_estimation,
+        help=load_text("pages/text_files/help_text/pedvol.txt")
+    )
+    nlanes = st.sidebar.number_input(
+        label="Number of Lanes",
+        min_value=1,
+        max_value=10,
+        value=5,
+        step=1,
+        key="nlanes",
+        disabled=disable_direct_estimation,
+        help=load_text("pages/text_files/help_text/nlanes.txt")
     )
 
     # --- Treatments ---
@@ -120,6 +155,7 @@ def build_sidebar(aadt_limit_table: pl.DataFrame):
     disabled = True
     if int_type == "4st":
         disabled = False
+        signal=True
     signal = st.sidebar.checkbox("Traffic Signal", signal, help=load_text("pages/text_files/help_text/traffic_signal.txt"), disabled=disabled)
 
     school = False
@@ -151,6 +187,8 @@ def build_sidebar(aadt_limit_table: pl.DataFrame):
             "signal_cmf": signal,
             "school_cmf": school,
         },
+        "nlanes": nlanes,
+        "pedvol": pedvol,
         "developer_view": developer_view,
         "aadt_limits": aadt_limits,
     }

@@ -1,6 +1,6 @@
 import streamlit as st
 import polars as pl
-import numpy as np
+# import numpy as np
 import plotly.express as px
 from src.risk_estimation import crash_frequency_helpers as risk_mod, streamlit_helpers as helpers, plotting_helpers
 from loguru import logger
@@ -28,6 +28,7 @@ baseline_results = risk_mod.estimate_crashes(
     scenario_name="baseline"
 )
 
+# TODO: GIVE AFTER SCENARIO FOR 4TH AND AGATE PROPORTION OF 0.126, RESULTS CURRENTLY INCORRECT
 results = risk_mod.estimate_crashes(
     spfs=spf_table,
     int_name=config["intersection"],
@@ -40,15 +41,37 @@ results = risk_mod.estimate_crashes(
     **config["cmf"]
 )
 
-results_df = (
-    helpers.combine_results([baseline_results, results])
-    .with_columns(long_run_ped_percent=pl.col("long_run_ped_prob")*100)
-    .with_columns(long_run_ped_percent=pl.col("long_run_ped_percent").round(2))
-)
+if config["intersection"] == "Agate & 4th":
+    results_direct = risk_mod.estimate_crashes(
+        spfs=spf_table,
+        int_name=config["intersection"],
+        int_type="4sg",
+        aadt_major=config["aadt_major"],
+        aadt_minor=config["aadt_minor"],
+        aadt_max=aadt_limit_table,
+        years=config["years"],
+        scenario_name="post-treatment-direct",
+        nlanes=config["nlanes"],
+        pedvol=config["pedvol"]
+    )
+
+    results_df = (
+        helpers.combine_results([baseline_results, results, results_direct])
+        .with_columns(long_run_ped_percent=pl.col("long_run_ped_prob")*100)
+        .with_columns(long_run_ped_percent=pl.col("long_run_ped_percent").round(2))
+    )
+
+else:
+    results_df = (
+        helpers.combine_results([baseline_results, results])
+        .with_columns(long_run_ped_percent=pl.col("long_run_ped_prob")*100)
+        .with_columns(long_run_ped_percent=pl.col("long_run_ped_percent").round(2))
+    )
 
 col1, col2 = st.columns(2)
 if config["developer_view"]:
 
+    st.write(spf_table)
     col1.header("Results - Baseline")
     col1.write(baseline_results)
 
@@ -100,7 +123,7 @@ fig = px.bar(
     x="scenario", 
     y="long_run_ped_percent", 
     text="long_run_ped_percent",
-    title=f"Chance of at least one accident in {config["years"]} years",
+    title=f"Chance of at least one accident in {config['years']} years",
     labels={
         "scenario": "Scenario",
         "long_run_ped_percent": "Chance of an accident (%)"
@@ -122,7 +145,9 @@ baseline_year_sweep = risk_mod.sweep_across_years(
     aadt_major=config["aadt_major"],
     aadt_minor=config["aadt_minor"],
     aadt_max=aadt_limit_table,
-    scenario_name="baseline"
+    scenario_name="baseline",
+    pedvol=config["pedvol"],
+    nlanes=config["nlanes"]
 )
 
 post_year_sweep = risk_mod.sweep_across_years(
@@ -133,11 +158,31 @@ post_year_sweep = risk_mod.sweep_across_years(
     aadt_minor=config["aadt_minor"],
     aadt_max=aadt_limit_table,
     scenario_name="post-treatment",
+    pedvol=config["pedvol"],
+    nlanes=config["nlanes"],
     **config["cmf"]
 )
 
+if config["intersection"] == "Agate & 4th":
+    post_year_sweep_direct = risk_mod.sweep_across_years(
+        spfs=spf_table,
+        int_name=config["intersection"],
+        int_type="4sg",
+        aadt_major=config["aadt_major"],
+        aadt_minor=config["aadt_minor"],
+        aadt_max=aadt_limit_table,
+        scenario_name="post-treatment-direct",
+        pedvol=config["pedvol"],
+        nlanes=config["nlanes"]
+    )
+
+    tables_to_combine = [baseline_year_sweep, post_year_sweep, post_year_sweep_direct]
+
+else:
+    tables_to_combine = [baseline_year_sweep, post_year_sweep]
+
 year_sweep_df = (
-    pl.concat([baseline_year_sweep, post_year_sweep])
+    pl.concat(tables_to_combine)
     .with_columns(long_run_ped_percent=pl.col("long_run_ped_prob")*100)
     .with_columns(long_run_ped_percent=pl.col("long_run_ped_percent").round(2))
 )
@@ -155,9 +200,18 @@ fig = px.line(
         "long_run_ped_percent": "Chance of an accident (%)"
     }
 )
-fig.add_vline(x=config["years"], line_width=1, line_dash="dash", line_color="red", annotation_text=f"Years Selected: {config["years"]}")
-fig.update_traces(
-    marker=dict(color=[color_map[s] for s in results_df["scenario"]])
+fig.add_vline(x=config["years"], line_width=1, line_dash="dash", line_color="red", opacity=0.7, annotation_text=f"Year Selected: {config['years']}")
+fig.update_traces(mode="markers+lines", hovertemplate=None)
+fig.update_layout(
+    yaxis_range=[0, 100],
+    legend=dict(
+        yanchor="bottom",
+        y=0.01,
+        xanchor="right",
+        x=0.99
+    ),
+    hovermode="x"
 )
-fig.update_layout(yaxis_range=[0, 100])
+fig.update_xaxes(showspikes=True, spikemode="across", spikethickness=1, spikecolor="grey")
+# fig.update_yaxes(showspikes=True, spikemode="across", spikethickness=2, spikecolor="grey")
 years_figcol2.plotly_chart(fig, key="year_line_plot")

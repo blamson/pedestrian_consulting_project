@@ -459,7 +459,10 @@ def estimate_crashes(
     cmf_ped = compute_cmfs(bulbout_cmf=bulbout_cmf, school_cmf=school_cmf, calc_ped_cmf=True)
 
     pred_veh = nbi * cmf_veh
-    pred_ped = nped_base * cmf_veh * cmf_ped
+    if int_type in ["4sg", "3sg"]:
+        pred_ped=nped_base
+    else:
+        pred_ped = nped_base * cmf_veh * cmf_ped
     long_run_prob = calc_long_run_accident_probability(num_accidents_per_year=pred_ped, years=years)
 
     return {
@@ -471,7 +474,7 @@ def estimate_crashes(
         "bulbout_cmf": bulbout_cmf,
         "signal_cmf": signal_cmf,
         "school_cmf": school_cmf,
-        "pedvol_cmf": pedvol,
+        "pedvol": pedvol,
         "nlanes": nlanes,
         "aadt_maj": aadt_major,
         "aadt_minor": aadt_minor,
