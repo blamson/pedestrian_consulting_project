@@ -74,7 +74,7 @@ def build_sidebar(aadt_limit_table: pl.DataFrame):
 
     # --- Traffic inputs ---
     st.sidebar.header("Traffic Parameters")
-    help_text = load_text("pages/text_files/help_text/aadt_major.txt")
+    help_text = load_text("app_pages/text_files/help_text/aadt_major.txt")
     st.sidebar.number_input(
         label=f"Agate Traffic Volume - Default: {DEFAULT_MAJOR_AADT} - Max: {MAX_MAJOR_AADT}",
         min_value=1,
@@ -85,7 +85,7 @@ def build_sidebar(aadt_limit_table: pl.DataFrame):
         help=help_text
     )
 
-    help_text = load_text("pages/text_files/help_text/minor_percent.txt")
+    help_text = load_text("app_pages/text_files/help_text/minor_percent.txt")
     st.sidebar.slider(
         label=f"{minor_road} Traffic Percent",
         min_value=0.01,
@@ -119,7 +119,7 @@ def build_sidebar(aadt_limit_table: pl.DataFrame):
         max_value=100,
         value=10,
         key="years",
-        help=load_text("pages/text_files/help_text/years.txt")
+        help=load_text("app_pages/text_files/help_text/years.txt")
     )
 
     st.sidebar.header("Direct Estimation Parameters", help="Direct estimation only available for Agate & 4th")
@@ -131,7 +131,7 @@ def build_sidebar(aadt_limit_table: pl.DataFrame):
         step=100,
         key="pedvol",
         disabled=disable_direct_estimation,
-        help=load_text("pages/text_files/help_text/pedvol.txt")
+        help=load_text("app_pages/text_files/help_text/pedvol.txt")
     )
     nlanes = st.sidebar.number_input(
         label="Number of Lanes",
@@ -141,22 +141,22 @@ def build_sidebar(aadt_limit_table: pl.DataFrame):
         step=1,
         key="nlanes",
         disabled=disable_direct_estimation,
-        help=load_text("pages/text_files/help_text/nlanes.txt")
+        help=load_text("app_pages/text_files/help_text/nlanes.txt")
     )
 
     # --- Treatments ---
     st.sidebar.header("Intersection Treatments")
 
-    twltl = st.sidebar.checkbox("Two Way Left Turn Lane", value=True, help=load_text("pages/text_files/help_text/twltl.txt"))
-    lighting = st.sidebar.checkbox("Street Lights", True, help=load_text("pages/text_files/help_text/street_lights.txt"))
-    bulbout = st.sidebar.checkbox("Bulbout", bulbout, help=load_text("pages/text_files/help_text/bulbout.txt"))
+    twltl = st.sidebar.checkbox("Two Way Left Turn Lane", value=True, help=load_text("app_pages/text_files/help_text/twltl.txt"))
+    lighting = st.sidebar.checkbox("Street Lights", True, help=load_text("app_pages/text_files/help_text/street_lights.txt"))
+    bulbout = st.sidebar.checkbox("Bulbout", bulbout, help=load_text("app_pages/text_files/help_text/bulbout.txt"))
 
     signal = False
     disabled = True
     if int_type == "4st":
         disabled = False
         signal=True
-    signal = st.sidebar.checkbox("Traffic Signal", signal, help=load_text("pages/text_files/help_text/traffic_signal.txt"), disabled=disabled)
+    signal = st.sidebar.checkbox("Traffic Signal", signal, help=load_text("app_pages/text_files/help_text/traffic_signal.txt"), disabled=disabled)
 
     school = False
     if int_type in ["3sg", "4sg"]:

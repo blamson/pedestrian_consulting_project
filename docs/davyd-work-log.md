@@ -40,3 +40,52 @@
         - convert .txt notes into .docx and then resolve merge conflicts on github
 
 
+- 2026-03-03 Tuesday (3 hours)
+    - started making a cheatsheet on the .xlsx formulas and calculations, but it was difficult to understand. Realized I need to draw information from the Highway Safety Manual (HSM).
+    - looked into acquiring a copy of the HSM, which turned out to be accessible via Auraria library. Chapter 12 (Predictive Method for Urban and Suburban Arterials) is the relevant section for our work since Agate Ave is a 5-lane urban arterial.
+
+- 2026-03-05 Thursday (2 hours)
+    - read into HSM Chapter 12. Started filling out the cheatsheet with the actual equations. Key realization: the SPF for vehicle-pedestrian collisions at unsignalized intersections (Equation 12-30) is an *adjustment factor* approach — it takes the total intersection crash prediction Nbi (which comes from multi-vehicle + single-vehicle SPFs via Equations 12-21 and 12-24) and multiplies it by f_pedi from Table 12-16. So pedestrian crashes are derived indirectly from vehicle crash rates for stop-controlled intersections, unlike the signalized case which has a dedicated pedestrian SPF (Eq 12-29).
+
+- 2026-03-10 Tuesday (3 hours)
+    - realized that the indirect pedestrian crash rate estimate for the Mesa intersection is probably insufficient as a standalone justification for the bulbout. f_pedi = 0.022 for 4ST intersections is a blanket adjustment factor and doesn't actually capture anything about the geometry changes the bulbout introduces (reduced crossing distance, reduced exposure time).
+    - looked into the peak pedestrian volume data in the SGM study more carefully. The 1-hour peak is only 6 peds (11.4 adjusted), which feels really low to justify anything on its own. This is another reason the direct crash rate approach alone is shaky — we need the conflict simulation angle to supplement it.
+
+- 2026-03-12 Thursday (1.5 hours)
+    - looked into SUMO. It has some limitations for what we want to do but it's not impossible. Key steps for our use case: (1) build the network in netedit with the correct lane geometry for before/after bulbout, (2) define vehicle and pedestrian demand based on SGM counts, (3) run the simulation and export trajectory (.fcd) files, (4) feed those into SSAM to quantify conflicts (TTC, PET).
+
+- 2026-03-15 Sunday (3 hours)
+    - cloned the SUMO repository and opened it up on my desktop. There were some package issues I had to figure out — macbook spent about an hour downloading necessary packages via brew (xquartz, proj, gdal, fox toolkit for the GUI). Finally got netedit to launch.
+
+- 2026-03-17 Tuesday (3 hours)
+    - successfully opened up the visual editor for SUMO. Drew up a basic intersection approximating Agate & Mesa — 5 lanes on Agate, 2 lanes on Mesa, crosswalks on all legs. One difficulty was exporting the trajectory files in a format SSAM can actually ingest; SSAM expects a specific trajectory file format and SUMO's default fcd-output needs post-processing.
+
+- 2026-03-19 Thursday (2 hours)
+    - looked into the trajectory export difficulty from Tuesday. Found that there's a traj conversion script in the SSAM docs that handles the SUMO-to-SSAM pipeline, but I need to double-check the units and timestep alignment.
+    - talked with Brady on how to address the Mesa Street volume uncertainty. I thought it was best to rely on just upper and lower bounds based on the 4th and 6th street volumes from the SGM study, but Brady wanted to do a more formal uncertainty analysis using variance. That's problematic because of the n=2 sample size — variance on two data points isn't really meaningful statistically. Agreed to go with the bounds approach for now and revisit if Chris gets us more volume data.
+
+- 2026-03-24 Tuesday (3 hours)
+    - created a Python notebook that performs sensitivity analysis on the pedestrian crash rate based on different Mesa Street AADT assumptions. Used Equation 12-21 for multi-vehicle and Equation 12-24 for single-vehicle, then applied f_pedi = 0.022 per Table 12-16. It's reassuring that the upper bound of Mesa volume (with bulbout) generates a pedestrian crash rate still below the lower bound without the bulbout — meaning the bulbout treatment dominates the volume uncertainty, which strengthens the recommendation.
+
+- 2026-03-26 Thursday (2.5 hours)
+    - looked into how AADT pedestrian can be calculated from the SGM study. There are some problems with their approach — they apply the NBPD seasonal adjustment factor (1.9x from Feb to May) which is designed for multi use paths and pedestrian entertainment districts, not school crossings on a state highway. Also their counts were only 12-hour (7AM-7PM) and the NBPD hourly adjustment factors assume a specific activity profile we can't verify. But we chose to go with it anyway since it's the only data we have and the CMF treatment effect is large enough to absorb some input error.
+
+- 2026-03-31 Tuesday (3.5 hours)
+    - started work on validation document. It is unclear how to satisfy the requirements for the assignment given the unique nature of our work, our "data" isn't the typical csv/excel format with missing values and distributions to check. It's a small set of accepted parameters drawn from CDOT resources and the SGM engineering study.
+    - reframed the validation problem as being about the modeling process rather than the data itself. The HSM has many variations of crash prediction models depending on road configuration, and our validation is about making sure we match Agate & Mesa to the correct model (3ST urban) and Agate & 4th to the correct model (4ST urban). Wrote up the road characteristics section.
+    - note on the urban vs rural classification: Granby has 2000 population which technically meets the FHWA rural definition (<5000), but the rural HSM chapter doesn't support pedestrian crash estimation. So we're using the urban chapter (Ch 12) instead and documenting that choice.
+
+- 2026-04-02 Thursday (2 hours)
+    - finished validation document. Worked through the traffic volume section: Agate AADT is 11,000 from CDOT station 101868 (same source SGM used). 4th street AADT isn't publicly available, so I approximated it using the minor/major peak hourly ratios from Table 6 of the SGM signal warrant study
+    - wrote up the pedestrian volume conversion method. The HSM signalized intersection pedestrian SPF needs PedVol as daily volume, but we only have peak hourly counts 
+    - nice validation result: the Mesa conversion gives the same 138.40 AADT whether you start from the unadjusted peak or the seasonally adjusted peak.
+
+- 2026-04-07 Tuesday (3 hours)
+    - worked on presentation for class. Structured it around: (1) background on Highway 40 and the pedestrian safety concern near the Granby schools, (2) the two proposed treatments (3) data aquisition.
+    - Brady and I split the slides — he took the problem/background intro and I took the methodology and results. Also included the sensitivity analysis on Mesa AADT uncertainty.
+
+- 2026-04-09 Thursday (2 hours)
+    - finished presentation with Brady right before class. Did one practice round beforehand. Presentation in class went okay but we ran long on some of the methodology slides. the HSM model details are dense and hard to compress without losing the logic. 
+
+- 2026-04-10 Friday (1 hour)
+    - met with Chris over zoom and presented our slides. It felt much smoother than during class because of the experience of running through slides and knowing what specific bullets/points become too long-winded. Also used tips from class feedback to make better use of the flowchart that I had included as an image but hadn't focused my speaking on.
