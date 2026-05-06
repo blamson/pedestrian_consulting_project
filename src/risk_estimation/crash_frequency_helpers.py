@@ -4,6 +4,8 @@ from math import exp, log, prod
 import numpy as np
 from scipy.stats import poisson
 from loguru import logger
+import streamlit as st
+from scipy.stats import poisson
 
 
 def is_missing_like(x) -> bool:
@@ -450,10 +452,12 @@ def estimate_crashes(
 
         nped_base = compute_signalized_pedestrian_spf(spf_ped, aadt_major, aadt_minor, pedvol, nlanes)
         fpedi = None
+        ped_estimation_type = "direct"
 
     else:
         fpedi = get_pedestrian_factor(int_type)
         nped_base = nbi * fpedi
+        ped_estimation_type = "indirect"
     
     cmf_veh = compute_cmfs(lighting_cmf=lighting_cmf, twltl_cmf=twltl_cmf, signal_cmf=signal_cmf)
     cmf_ped = compute_cmfs(bulbout_cmf=bulbout_cmf, school_cmf=school_cmf, calc_ped_cmf=True)
@@ -469,6 +473,7 @@ def estimate_crashes(
         "intersection_name": int_name,
         "intersection_type": int_type,
         "scenario": scenario_name,
+        "ped_estimation_type": ped_estimation_type,
         "lighting_cmf": lighting_cmf,
         "twltl_cmf": twltl_cmf,
         "bulbout_cmf": bulbout_cmf,
@@ -492,79 +497,116 @@ def estimate_crashes(
     }
 
 
-def sweep_aadt_major(
-    spfs,
-    int_name,
-    int_type,
-    aadt_max,
-    aadt_major_min,
-    aadt_major_max,
-    k,
-    years=10,
-    steps=50,
-    **fixed_inputs
-) -> pl.DataFrame:
+def expand_scenario_dict(scenario: dict, years: int) -> pl.DataFrame:
+    base = pl.DataFrame([scenario])
 
-    aadt_major_grid = np.linspace(aadt_major_min, aadt_major_max, steps)
-
-    rows = []
-    aadt_limits = aadt_max.filter(pl.col("intersection_type") == int_type)
-    for aadt_major in aadt_major_grid:
-        aadt_minor = k * aadt_major
-        if aadt_minor <= aadt_limits["aadt_minor"].item():
-            result = estimate_crashes(
-                spfs=spfs,
-                int_name=int_name,
-                int_type=int_type,
-                aadt_major=float(aadt_major),
-                aadt_minor=float(aadt_minor),
-                aadt_max=aadt_max,
-                years=years,
-                **fixed_inputs
-            )
-
-            rows.append({
-                "aadt_major": float(aadt_major),
-                "aadt_minor": float(aadt_minor),
-                "pred_ped": result["pred_ped"],
-                f"{years}_year_crash_probability": result["long_run_ped_prob"]
-            })
-
-    return pl.DataFrame(rows)
-
-
-def sweep_across_years(
-    spfs: pl.DataFrame,
-    int_name,
-    int_type,
-    aadt_major,
-    aadt_minor,
-    aadt_max,
-    scenario_name,
-    **kwargs
-) -> pl.DataFrame:
-    logger.info("Beginning sweep across years")
-    risk_estimates = estimate_crashes(
-        spfs=spfs, 
-        int_name=int_name, 
-        int_type=int_type, 
-        aadt_major=aadt_major, 
-        aadt_minor=aadt_minor, 
-        scenario_name=scenario_name, 
-        aadt_max=aadt_max,
-        **kwargs
+    return (
+        base.join(
+            pl.DataFrame({"year": range(1, years + 1)}),
+            how="cross"
+        )
+        .with_columns(
+            pl.struct(["pred_ped", "year"]).map_elements(
+                lambda x: calc_long_run_accident_probability(x["pred_ped"], x["year"])
+            ).alias("long_run_ped_prob")
+        )
     )
 
+
+def build_results_df(
+    spf_table: pl.DataFrame,
+    aadt_limit_table: pl.DataFrame,
+    intersection,
+    inputs,
+    sweep_century=False
+) -> pl.DataFrame:
+    aadt_major = inputs.aadt_major
+    minor_pct = inputs.minor_pct
+    years = inputs.years if inputs.years is not None else 10
+
+    aadt_minor = intersection.compute_minor_aadt(aadt_major, minor_pct)
+
+    before = estimate_crashes(
+        spfs=spf_table,
+        int_name=intersection.name,
+        int_type=intersection.int_type,
+        aadt_major=aadt_major,
+        aadt_minor=aadt_minor,
+        aadt_max=aadt_limit_table,
+        scenario_name="Before - Indirect",
+        years=years,
+    )
+
+    after = estimate_crashes(
+        spfs=spf_table,
+        int_name=intersection.name,
+        int_type=intersection.int_type,
+        aadt_major=aadt_major,
+        aadt_minor=aadt_minor,
+        aadt_max=aadt_limit_table,
+        scenario_name="After - Indirect",
+        twltl_cmf=inputs.cmf["twltl_cmf"],
+        signal_cmf=inputs.cmf["signal_cmf"],
+        bulbout_cmf=inputs.cmf["bulbout_cmf"],
+        lighting_cmf=inputs.cmf["lighting_cmf"],
+        years=years,
+    )
+
+    results = [before, after]
+
+    if intersection.name == "Agate & 4th":
+        direct = estimate_crashes(
+            spfs=spf_table,
+            int_name=intersection.name,
+            int_type="4sg",
+            aadt_major=aadt_major,
+            aadt_minor=aadt_minor,
+            aadt_max=aadt_limit_table,
+            scenario_name="After - Direct",
+            nlanes=inputs.nlanes,
+            pedvol=inputs.pedvol,
+            years=years,
+        )
+        results.append(direct)
+
+    if sweep_century:
+        dfs = [expand_scenario_dict(s, 100) for s in results]
+        return (
+            pl.concat(dfs, how="vertical_relaxed")
+            .with_columns(
+                (pl.col("long_run_ped_prob") * 100).round(2).alias("long_run_ped_percent"),
+                (pl.col("year").alias("years"))
+            )
+            .drop("year")
+        )
+
+    else:
+        return (
+            pl.DataFrame(results)
+            .with_columns(
+                (pl.col("long_run_ped_prob") * 100).alias("long_run_ped_percent")
+            )
+            .with_columns(
+                pl.col("long_run_ped_percent").round(2)
+            )
+        )
+
+
+def simulate_accidents_over_time(results_df: pl.DataFrame):
+    rng = np.random.default_rng()
+
     rows = []
-    pred_ped = risk_estimates["pred_ped"]
-    pred_veh = risk_estimates["pred_veh"]
-    for year in np.arange(1, 101, 1):
-        if year in [1, 25, 50, 75, 100]:
-            logger.debug(f"Sweep step {year}")
-        new_row = risk_estimates.copy()
-        new_row["years"] = year
-        new_row["long_run_ped_prob"] = calc_long_run_accident_probability(pred_ped, year)
-        new_row["long_run_veh_prob"] = calc_long_run_accident_probability(pred_veh, year)
-        rows.append(new_row)
+
+    for row in results_df.iter_rows(named=True):
+        lam = row["pred_ped"]
+        years = row["years"]
+
+        total = rng.poisson(lam=lam * years)
+
+        rows.append({
+            **row,
+            "years": years,
+            "simulated_total_crashes": int(total)
+        })
 
     return pl.DataFrame(rows)
