@@ -84,5 +84,4 @@ fig.update_layout(
     hovermode="x"
 )
 fig.update_xaxes(showspikes=True, spikemode="across", spikethickness=1, spikecolor="grey")
-# fig.update_yaxes(showspikes=True, spikemode="across", spikethickness=2, spikecolor="grey")
 col2.plotly_chart(fig, key="year_line_plot")
