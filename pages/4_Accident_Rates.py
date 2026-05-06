@@ -1,8 +1,8 @@
 import streamlit as st
-from src.risk_estimation import crash_frequency_helpers as risk_mod, streamlit_helpers_2 as helpers, plotting_helpers
+from src.risk_estimation import crash_frequency_helpers as risk_mod, streamlit_helpers as helpers, plotting_helpers
 from loguru import logger
 
-title = "Tinkerin"
+title = "Accident Rates"
 logger.info(f"[Streamlit Navigation] - Loading Page: {title}")
 
 st.set_page_config(layout="wide")
@@ -13,24 +13,19 @@ aadt_limit_table = helpers.load_data("data/aadt_maximums.csv")
 spf_table = helpers.load_data("data/spfs.csv")
 
 # Sidebar
-ixn, inputs = helpers.build_sidebar_new(
+intersection, inputs = helpers.build_sidebar(
     aadt_limit_table,
     include_years=False
 )
 
 # Debug info
 if inputs.developer_view:
-    dev_container = st.container(border=True)
-    dev_container.header("DEVELOPER INFORMATION")
-    dev_container.header("Intersection class information")
-    dev_container.write(ixn)
-    dev_container.header("Input class information")
-    dev_container.write(inputs)
+    helpers.show_debug(intersection, inputs)
 
 # Results computation
 results_df = risk_mod.build_results_df_new(
     spf_table=spf_table,
-    intersection=ixn,
+    intersection=intersection,
     inputs=inputs,
     aadt_limit_table=aadt_limit_table
 )
