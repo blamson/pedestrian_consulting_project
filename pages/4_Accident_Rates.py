@@ -38,12 +38,14 @@ st.markdown(text)
 tab1, tab2 = st.tabs(["Chart - Selected Values", "Data"])
 col1, col2 = tab1.columns(2)
 
+scenario_order = results_df["scenario"].to_list()
 fig1, key1 = plotting_helpers.make_accident_bar(
     results_df,
     y_col="pred_ped",
     title="Pedestrian Accident Rate",
     y_label="Accidents per Year",
-    key="pedestrian_accident_rate_plot"
+    key="pedestrian_accident_rate_plot",
+    scenario_order=scenario_order
 )
 
 fig2, key2 = plotting_helpers.make_accident_bar(
@@ -51,7 +53,8 @@ fig2, key2 = plotting_helpers.make_accident_bar(
     y_col="pred_veh",
     title="Vehicle Accident Rate",
     y_label="Accidents per Year",
-    key="vehicle_accident_rate_plot"
+    key="vehicle_accident_rate_plot",
+    scenario_order=scenario_order
 )
 
 col1.plotly_chart(fig1, key=key1)

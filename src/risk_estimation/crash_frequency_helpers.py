@@ -5,6 +5,7 @@ import numpy as np
 from scipy.stats import poisson
 from loguru import logger
 import streamlit as st
+from scipy.stats import poisson
 
 
 def is_missing_like(x) -> bool:
@@ -667,3 +668,23 @@ def build_results_df(
                 pl.col("long_run_ped_percent").round(2)
             )
         )
+
+
+def simulate_accidents_over_time(results_df: pl.DataFrame):
+    rng = np.random.default_rng()
+
+    rows = []
+
+    for row in results_df.iter_rows(named=True):
+        lam = row["pred_ped"]
+        years = row["years"]
+
+        total = rng.poisson(lam=lam * years)
+
+        rows.append({
+            **row,
+            "years": years,
+            "simulated_total_crashes": int(total)
+        })
+
+    return pl.DataFrame(rows)

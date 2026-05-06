@@ -244,7 +244,8 @@ def sidebar_traffic_inputs(ixn: Intersection) -> Tuple[int, float, float]:
 
     st.sidebar.metric(
         label=f"{ixn.minor_road} Traffic Volume",
-        value=f"{int(aadt_minor)} veh/day"
+        value=f"{int(aadt_minor)} veh/day",
+        border=True
     )
 
     return aadt_major, minor_pct, aadt_minor
@@ -445,9 +446,11 @@ def show_debug(ixn: Intersection, inputs: IntersectionInputs):
     Returns:
         None
     """
-    dev_container = st.container(border=True)
+    dev_container = st.container(border=True, height=300)
     dev_container.header("BEBUG INFORMATION")
     dev_container.header("Intersection class information")
     dev_container.write(ixn)
     dev_container.header("Input class information")
     dev_container.write(inputs)
+    dev_container.header("Streamlit Session State")
+    dev_container.write(st.session_state)
