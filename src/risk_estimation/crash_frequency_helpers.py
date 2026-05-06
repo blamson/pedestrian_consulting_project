@@ -574,129 +574,35 @@ def sweep_across_years(
     return pl.DataFrame(rows)
 
 
-@st.cache_data
+def expand_scenario_dict(scenario: dict, years: int) -> pl.DataFrame:
+    base = pl.DataFrame([scenario])
+
+    return (
+        base.join(
+            pl.DataFrame({"year": range(1, years + 1)}),
+            how="cross"
+        )
+        .with_columns(
+            pl.struct(["pred_ped", "year"]).map_elements(
+                lambda x: calc_long_run_accident_probability(x["pred_ped"], x["year"])
+            ).alias("long_run_ped_prob")
+        )
+    )
+
+
 def build_results_df(
     spf_table: pl.DataFrame,
     aadt_limit_table: pl.DataFrame,
-    config: dict
-) -> pl.DataFrame:
-    baseline = estimate_crashes(
-        spfs=spf_table,
-        int_name=config["intersection"],
-        int_type=config["int_type"],
-        aadt_major=config["aadt_major"],
-        aadt_minor=config["aadt_minor"],
-        aadt_max=aadt_limit_table,
-        years=config["years"],
-        scenario_name="baseline"
-    )
-
-    post = estimate_crashes(
-        spfs=spf_table,
-        int_name=config["intersection"],
-        int_type=config["int_type"],
-        aadt_major=config["aadt_major"],
-        aadt_minor=config["aadt_minor"],
-        aadt_max=aadt_limit_table,
-        years=config["years"],
-        scenario_name="post-treatment",
-        **config["cmf"]
-    )
-
-    results = [baseline, post]
-
-    if config["intersection"] == "Agate & 4th":
-        direct = estimate_crashes(
-            spfs=spf_table,
-            int_name=config["intersection"],
-            int_type="4sg",
-            aadt_major=config["aadt_major"],
-            aadt_minor=config["aadt_minor"],
-            aadt_max=aadt_limit_table,
-            years=config["years"],
-            scenario_name="post-treatment-direct",
-            nlanes=config["nlanes"],
-            pedvol=config["pedvol"]
-        )
-        results.append(direct)
-
-    return (
-        pl.DataFrame(results)
-        .with_columns(long_run_ped_percent=pl.col("long_run_ped_prob") * 100)
-        .with_columns(pl.col("long_run_ped_percent").round(2))
-    )
-
-
-# def build_results_df_new(spf_table: pl.DataFrame, aadt_limit_table: pl.DataFrame, years=10):
-
-#     before = estimate_crashes(
-#         spfs=spf_table,
-#         int_name=st.session_state.intersection,
-#         int_type=st.session_state.int_type_default,
-#         aadt_major=st.session_state.aadt_major_selected,
-#         aadt_minor=st.session_state.minor_aadt_selected,
-#         aadt_max=aadt_limit_table,
-#         scenario_name="Before - Indirect",
-#         years=years,
-#     )
-
-#     after = estimate_crashes(
-#         spfs=spf_table,
-#         int_name=st.session_state.intersection,
-#         int_type=st.session_state.int_type_default,
-#         aadt_major=st.session_state.aadt_major_selected,
-#         aadt_minor=st.session_state.minor_aadt_selected,
-#         aadt_max=aadt_limit_table,
-#         scenario_name="After - Indirect",
-#         twltl_cmf=st.session_state.twltl_cmf,
-#         signal_cmf=st.session_state.signal_cmf,
-#         bulbout_cmf=st.session_state.bulbout_cmf,
-#         lighting_cmf=st.session_state.lighting_cmf,
-#         years=years
-#     )
-
-#     results = [before, after]
-
-#     # optional branch stays explicit, not abstracted
-#     if st.session_state.intersection == "Agate & 4th":
-#         direct = estimate_crashes(
-#             spfs=spf_table,
-#             int_name=st.session_state.intersection,
-#             int_type="4sg",
-#             aadt_major=st.session_state.aadt_major_selected,
-#             aadt_minor=st.session_state.minor_aadt_selected,
-#             aadt_max=aadt_limit_table,
-#             scenario_name="After - Direct",
-#             nlanes=st.session_state.nlanes_selected,
-#             pedvol=st.session_state.pedvol_selected,
-#             years=years
-#         )
-#         results.append(direct)
-
-#     return (
-#         pl.DataFrame(results)
-#         .with_columns(
-#             (pl.col("long_run_ped_prob") * 100).alias("long_run_ped_percent")
-#         )
-#         .with_columns(
-#             pl.col("long_run_ped_percent").round(2)
-#         )
-#     )
-
-def build_results_df_new(
-    spf_table: pl.DataFrame,
-    aadt_limit_table: pl.DataFrame,
     intersection,
-    inputs
+    inputs,
+    sweep_century=False
 ) -> pl.DataFrame:
-    # --- core inputs ---
     aadt_major = inputs.aadt_major
     minor_pct = inputs.minor_pct
     years = inputs.years if inputs.years is not None else 10
 
     aadt_minor = intersection.compute_minor_aadt(aadt_major, minor_pct)
 
-    # --- BEFORE (no CMFs) ---
     before = estimate_crashes(
         spfs=spf_table,
         int_name=intersection.name,
@@ -708,7 +614,6 @@ def build_results_df_new(
         years=years,
     )
 
-    # --- AFTER (CMFs applied) ---
     after = estimate_crashes(
         spfs=spf_table,
         int_name=intersection.name,
@@ -726,7 +631,6 @@ def build_results_df_new(
 
     results = [before, after]
 
-    # --- DIRECT scenario (explicit branch stays) ---
     if intersection.name == "Agate & 4th":
         direct = estimate_crashes(
             spfs=spf_table,
@@ -742,13 +646,24 @@ def build_results_df_new(
         )
         results.append(direct)
 
-    # --- build dataframe ---
-    return (
-        pl.DataFrame(results)
-        .with_columns(
-            (pl.col("long_run_ped_prob") * 100).alias("long_run_ped_percent")
+    if sweep_century:
+        dfs = [expand_scenario_dict(s, 100) for s in results]
+        return (
+            pl.concat(dfs, how="vertical_relaxed")
+            .with_columns(
+                (pl.col("long_run_ped_prob") * 100).round(2).alias("long_run_ped_percent"),
+                (pl.col("year").alias("years"))
+            )
+            .drop("year")
         )
-        .with_columns(
-            pl.col("long_run_ped_percent").round(2)
+
+    else:
+        return (
+            pl.DataFrame(results)
+            .with_columns(
+                (pl.col("long_run_ped_prob") * 100).alias("long_run_ped_percent")
+            )
+            .with_columns(
+                pl.col("long_run_ped_percent").round(2)
+            )
         )
-    )

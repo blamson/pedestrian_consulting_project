@@ -13,12 +13,11 @@ home = st.Page("pages/1_writeup.py", title="Main Page", default=True)
 # limitations = st.Page("app_pages/5_Limitations.py", title="Limitations")
 accident_rates_dashboard = st.Page("pages/4_Accident_Rates.py", title="Accident Rates")
 long_term_risk_dashboard = st.Page("pages/5_Long_Term_Risk.py", title="Long Term Risk")
-tinkering2 = st.Page("pages/9_tinkering2.py", title="Messin about2")
 
 pg = st.navigation({
     "": [home],
     # "Methodology and Results": [background, methodology, data, results, limitations],
-    "Tools": [accident_rates_dashboard, long_term_risk_dashboard, tinkering2],
+    "Tools": [accident_rates_dashboard, long_term_risk_dashboard],
 })
 
 pg.run()

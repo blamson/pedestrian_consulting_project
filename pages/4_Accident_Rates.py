@@ -23,7 +23,7 @@ if inputs.developer_view:
     helpers.show_debug(intersection, inputs)
 
 # Results computation
-results_df = risk_mod.build_results_df_new(
+results_df = risk_mod.build_results_df(
     spf_table=spf_table,
     intersection=intersection,
     inputs=inputs,
