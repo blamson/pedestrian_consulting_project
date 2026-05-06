@@ -4,6 +4,7 @@ from math import exp, log, prod
 import numpy as np
 from scipy.stats import poisson
 from loguru import logger
+import streamlit as st
 
 
 def is_missing_like(x) -> bool:
@@ -450,10 +451,12 @@ def estimate_crashes(
 
         nped_base = compute_signalized_pedestrian_spf(spf_ped, aadt_major, aadt_minor, pedvol, nlanes)
         fpedi = None
+        ped_estimation_type = "direct"
 
     else:
         fpedi = get_pedestrian_factor(int_type)
         nped_base = nbi * fpedi
+        ped_estimation_type = "indirect"
     
     cmf_veh = compute_cmfs(lighting_cmf=lighting_cmf, twltl_cmf=twltl_cmf, signal_cmf=signal_cmf)
     cmf_ped = compute_cmfs(bulbout_cmf=bulbout_cmf, school_cmf=school_cmf, calc_ped_cmf=True)
@@ -469,6 +472,7 @@ def estimate_crashes(
         "intersection_name": int_name,
         "intersection_type": int_type,
         "scenario": scenario_name,
+        "ped_estimation_type": ped_estimation_type,
         "lighting_cmf": lighting_cmf,
         "twltl_cmf": twltl_cmf,
         "bulbout_cmf": bulbout_cmf,
@@ -568,3 +572,113 @@ def sweep_across_years(
         rows.append(new_row)
 
     return pl.DataFrame(rows)
+
+
+@st.cache_data
+def build_results_df(
+    spf_table: pl.DataFrame,
+    aadt_limit_table: pl.DataFrame,
+    config: dict
+) -> pl.DataFrame:
+    baseline = estimate_crashes(
+        spfs=spf_table,
+        int_name=config["intersection"],
+        int_type=config["int_type"],
+        aadt_major=config["aadt_major"],
+        aadt_minor=config["aadt_minor"],
+        aadt_max=aadt_limit_table,
+        years=config["years"],
+        scenario_name="baseline"
+    )
+
+    post = estimate_crashes(
+        spfs=spf_table,
+        int_name=config["intersection"],
+        int_type=config["int_type"],
+        aadt_major=config["aadt_major"],
+        aadt_minor=config["aadt_minor"],
+        aadt_max=aadt_limit_table,
+        years=config["years"],
+        scenario_name="post-treatment",
+        **config["cmf"]
+    )
+
+    results = [baseline, post]
+
+    if config["intersection"] == "Agate & 4th":
+        direct = estimate_crashes(
+            spfs=spf_table,
+            int_name=config["intersection"],
+            int_type="4sg",
+            aadt_major=config["aadt_major"],
+            aadt_minor=config["aadt_minor"],
+            aadt_max=aadt_limit_table,
+            years=config["years"],
+            scenario_name="post-treatment-direct",
+            nlanes=config["nlanes"],
+            pedvol=config["pedvol"]
+        )
+        results.append(direct)
+
+    return (
+        pl.DataFrame(results)
+        .with_columns(long_run_ped_percent=pl.col("long_run_ped_prob") * 100)
+        .with_columns(pl.col("long_run_ped_percent").round(2))
+    )
+
+
+def build_results_df_new(spf_table: pl.DataFrame, aadt_limit_table: pl.DataFrame, years=10):
+
+    before = estimate_crashes(
+        spfs=spf_table,
+        int_name=st.session_state.intersection,
+        int_type=st.session_state.int_type_default,
+        aadt_major=st.session_state.aadt_major_selected,
+        aadt_minor=st.session_state.minor_aadt_selected,
+        aadt_max=aadt_limit_table,
+        scenario_name="Before",
+        years=years,
+    )
+
+    after = estimate_crashes(
+        spfs=spf_table,
+        int_name=st.session_state.intersection,
+        int_type=st.session_state.int_type_default,
+        aadt_major=st.session_state.aadt_major_selected,
+        aadt_minor=st.session_state.minor_aadt_selected,
+        aadt_max=aadt_limit_table,
+        scenario_name="After",
+        twltl_cmf=st.session_state.twltl_cmf,
+        signal_cmf=st.session_state.signal_cmf,
+        bulbout_cmf=st.session_state.bulbout_cmf,
+        lighting_cmf=st.session_state.lighting_cmf,
+        years=years
+    )
+
+    results = [before, after]
+
+    # optional branch stays explicit, not abstracted
+    if st.session_state.intersection == "Agate & 4th":
+        direct = estimate_crashes(
+            spfs=spf_table,
+            int_name=st.session_state.intersection,
+            int_type="4sg",
+            aadt_major=st.session_state.aadt_major_selected,
+            aadt_minor=st.session_state.minor_aadt_selected,
+            aadt_max=aadt_limit_table,
+            scenario_name="After",
+            nlanes=st.session_state.nlanes_selected,
+            pedvol=st.session_state.pedvol_selected,
+            years=years
+        )
+        results.append(direct)
+
+    return (
+        pl.DataFrame(results)
+        .with_columns(
+            (pl.col("long_run_ped_prob") * 100).alias("long_run_ped_percent")
+        )
+        .with_columns(
+            pl.col("long_run_ped_percent").round(2)
+        )
+    )
