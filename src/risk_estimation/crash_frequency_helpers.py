@@ -521,17 +521,23 @@ def build_results_df(
     sweep_century=False
 ) -> pl.DataFrame:
     aadt_major = inputs.aadt_major
-    minor_pct = inputs.minor_pct
-    years = inputs.years if inputs.years is not None else 10
+    if intersection.name == "Agate & Mesa":
+        minor_pct = inputs.minor_pct
+        aadt_minor_before = intersection.compute_minor_aadt(aadt_major, minor_pct)
+        aadt_minor_after = aadt_minor_before
+    
+    else:
+        aadt_minor_before = intersection.compute_minor_aadt(aadt_major, intersection.minor_pct_default)
+        aadt_minor_after = intersection.compute_minor_aadt(aadt_major, intersection.minor_pct_alt)
 
-    aadt_minor = intersection.compute_minor_aadt(aadt_major, minor_pct)
+    years = inputs.years if inputs.years is not None else 10
 
     before = estimate_crashes(
         spfs=spf_table,
         int_name=intersection.name,
         int_type=intersection.int_type,
         aadt_major=aadt_major,
-        aadt_minor=aadt_minor,
+        aadt_minor=aadt_minor_before,
         aadt_max=aadt_limit_table,
         scenario_name="Before - Indirect",
         years=years,
@@ -542,7 +548,7 @@ def build_results_df(
         int_name=intersection.name,
         int_type=intersection.int_type,
         aadt_major=aadt_major,
-        aadt_minor=aadt_minor,
+        aadt_minor=aadt_minor_after,
         aadt_max=aadt_limit_table,
         scenario_name="After - Indirect",
         twltl_cmf=inputs.cmf["twltl_cmf"],
@@ -560,7 +566,7 @@ def build_results_df(
             int_name=intersection.name,
             int_type="4sg",
             aadt_major=aadt_major,
-            aadt_minor=aadt_minor,
+            aadt_minor=aadt_minor_after,
             aadt_max=aadt_limit_table,
             scenario_name="After - Direct",
             nlanes=inputs.nlanes,

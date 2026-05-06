@@ -37,7 +37,8 @@ results_df = (
 text = helpers.load_text("pages/text_files/main_page/long-term-risk.md")
 st.markdown(text)
 
-col1, col2 = st.columns(2)
+tab1, tab2 = st.tabs(["Chart - Selected Values", "Data"])
+col1, col2 = tab1.columns(2)
 
 fig = px.bar(
     results_df.filter(pl.col("years") == inputs.years), 
@@ -85,3 +86,5 @@ fig.update_layout(
 )
 fig.update_xaxes(showspikes=True, spikemode="across", spikethickness=1, spikecolor="grey")
 col2.plotly_chart(fig, key="year_line_plot")
+
+tab2.write(results_df)
