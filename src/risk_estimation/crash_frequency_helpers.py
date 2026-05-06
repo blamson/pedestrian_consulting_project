@@ -627,52 +627,122 @@ def build_results_df(
     )
 
 
-def build_results_df_new(spf_table: pl.DataFrame, aadt_limit_table: pl.DataFrame, years=10):
+# def build_results_df_new(spf_table: pl.DataFrame, aadt_limit_table: pl.DataFrame, years=10):
 
+#     before = estimate_crashes(
+#         spfs=spf_table,
+#         int_name=st.session_state.intersection,
+#         int_type=st.session_state.int_type_default,
+#         aadt_major=st.session_state.aadt_major_selected,
+#         aadt_minor=st.session_state.minor_aadt_selected,
+#         aadt_max=aadt_limit_table,
+#         scenario_name="Before - Indirect",
+#         years=years,
+#     )
+
+#     after = estimate_crashes(
+#         spfs=spf_table,
+#         int_name=st.session_state.intersection,
+#         int_type=st.session_state.int_type_default,
+#         aadt_major=st.session_state.aadt_major_selected,
+#         aadt_minor=st.session_state.minor_aadt_selected,
+#         aadt_max=aadt_limit_table,
+#         scenario_name="After - Indirect",
+#         twltl_cmf=st.session_state.twltl_cmf,
+#         signal_cmf=st.session_state.signal_cmf,
+#         bulbout_cmf=st.session_state.bulbout_cmf,
+#         lighting_cmf=st.session_state.lighting_cmf,
+#         years=years
+#     )
+
+#     results = [before, after]
+
+#     # optional branch stays explicit, not abstracted
+#     if st.session_state.intersection == "Agate & 4th":
+#         direct = estimate_crashes(
+#             spfs=spf_table,
+#             int_name=st.session_state.intersection,
+#             int_type="4sg",
+#             aadt_major=st.session_state.aadt_major_selected,
+#             aadt_minor=st.session_state.minor_aadt_selected,
+#             aadt_max=aadt_limit_table,
+#             scenario_name="After - Direct",
+#             nlanes=st.session_state.nlanes_selected,
+#             pedvol=st.session_state.pedvol_selected,
+#             years=years
+#         )
+#         results.append(direct)
+
+#     return (
+#         pl.DataFrame(results)
+#         .with_columns(
+#             (pl.col("long_run_ped_prob") * 100).alias("long_run_ped_percent")
+#         )
+#         .with_columns(
+#             pl.col("long_run_ped_percent").round(2)
+#         )
+#     )
+
+def build_results_df_new(
+    spf_table: pl.DataFrame,
+    aadt_limit_table: pl.DataFrame,
+    intersection,
+    inputs
+) -> pl.DataFrame:
+    # --- core inputs ---
+    aadt_major = inputs.aadt_major
+    minor_pct = inputs.minor_pct
+    years = inputs.years if inputs.years is not None else 10
+
+    aadt_minor = intersection.compute_minor_aadt(aadt_major, minor_pct)
+
+    # --- BEFORE (no CMFs) ---
     before = estimate_crashes(
         spfs=spf_table,
-        int_name=st.session_state.intersection,
-        int_type=st.session_state.int_type_default,
-        aadt_major=st.session_state.aadt_major_selected,
-        aadt_minor=st.session_state.minor_aadt_selected,
+        int_name=intersection.name,
+        int_type=intersection.int_type,
+        aadt_major=aadt_major,
+        aadt_minor=aadt_minor,
         aadt_max=aadt_limit_table,
-        scenario_name="Before",
+        scenario_name="Before - Indirect",
         years=years,
     )
 
+    # --- AFTER (CMFs applied) ---
     after = estimate_crashes(
         spfs=spf_table,
-        int_name=st.session_state.intersection,
-        int_type=st.session_state.int_type_default,
-        aadt_major=st.session_state.aadt_major_selected,
-        aadt_minor=st.session_state.minor_aadt_selected,
+        int_name=intersection.name,
+        int_type=intersection.int_type,
+        aadt_major=aadt_major,
+        aadt_minor=aadt_minor,
         aadt_max=aadt_limit_table,
-        scenario_name="After",
-        twltl_cmf=st.session_state.twltl_cmf,
-        signal_cmf=st.session_state.signal_cmf,
-        bulbout_cmf=st.session_state.bulbout_cmf,
-        lighting_cmf=st.session_state.lighting_cmf,
-        years=years
+        scenario_name="After - Indirect",
+        twltl_cmf=inputs.cmf["twltl_cmf"],
+        signal_cmf=inputs.cmf["signal_cmf"],
+        bulbout_cmf=inputs.cmf["bulbout_cmf"],
+        lighting_cmf=inputs.cmf["lighting_cmf"],
+        years=years,
     )
 
     results = [before, after]
 
-    # optional branch stays explicit, not abstracted
-    if st.session_state.intersection == "Agate & 4th":
+    # --- DIRECT scenario (explicit branch stays) ---
+    if intersection.name == "Agate & 4th":
         direct = estimate_crashes(
             spfs=spf_table,
-            int_name=st.session_state.intersection,
+            int_name=intersection.name,
             int_type="4sg",
-            aadt_major=st.session_state.aadt_major_selected,
-            aadt_minor=st.session_state.minor_aadt_selected,
+            aadt_major=aadt_major,
+            aadt_minor=aadt_minor,
             aadt_max=aadt_limit_table,
-            scenario_name="After",
-            nlanes=st.session_state.nlanes_selected,
-            pedvol=st.session_state.pedvol_selected,
-            years=years
+            scenario_name="After - Direct",
+            nlanes=inputs.nlanes,
+            pedvol=inputs.pedvol,
+            years=years,
         )
         results.append(direct)
 
+    # --- build dataframe ---
     return (
         pl.DataFrame(results)
         .with_columns(

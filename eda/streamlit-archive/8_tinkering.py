@@ -26,10 +26,9 @@ st.header("Expected Accidents Per Year")
 text = helpers.load_text("pages/text_files/main_page/accidents-per-year.md")
 st.markdown(text)
 
-col1, col2 = st.columns(2)
-tab11, tab12 = col1.tabs(["Chart", "Data"])
-tab21, tab22 = col2.tabs(["Chart", "Data"])
-fig1, key1 = plotting_helpers.make_accident_bar_new(
+tab1, tab2 = st.tabs(["Chart - Selected Values", "Data"])
+col1, col2 = tab1.columns(2)
+fig1, key1 = plotting_helpers.make_accident_bar(
     results_df,
     y_col="pred_ped",
     title="Pedestrian Accident Rate",
@@ -37,7 +36,7 @@ fig1, key1 = plotting_helpers.make_accident_bar_new(
     key="pedestrian_accident_rate_plot"
 )
 
-fig2, key2 = plotting_helpers.make_accident_bar_new(
+fig2, key2 = plotting_helpers.make_accident_bar(
     results_df,
     y_col="pred_veh",
     title="Vehicle Accident Rate",
@@ -45,7 +44,6 @@ fig2, key2 = plotting_helpers.make_accident_bar_new(
     key="vehicle_accident_rate_plot"
 )
 
-tab11.plotly_chart(fig1, key=key1)
-tab12.write(results_df.drop(["intersection_name", "intersection_type", "pred_veh", "long_run_ped_prob", "years"]))
-tab21.plotly_chart(fig2, key=key2)
-tab22.write(results_df.drop(["intersection_name", "intersection_type", "pred_ped", "long_run_ped_prob", "years"]))
+col1.plotly_chart(fig1, key=key1)
+col2.plotly_chart(fig2, key=key2)
+tab2.write(results_df.drop(["long_run_ped_prob", "years"]))
