@@ -1,0 +1,6 @@
+Two Way Left Turn Lane
+- A dedicated middle lane marked by solid and broken yellow lines with opposing left-turn arrows.
+- CMF Value of 0.92. Reduces crashes by 8%.
+- Crash Types: All Crashes
+- CMF Clearinghouse ID: 1285
+- Link: https://cmfclearinghouse.fhwa.dot.gov/detail.php?facid=1285

@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "granby-consulting-project"
+version = "0.1.0"
+description = "A project for quantifying pedestrian risk on two granby intersections."
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = ">=3.12,<4.0"
+streamlit = ">=1.56.0,<2.0.0"
+polars = ">=1.40.1,<2.0.0"
+plotly = ">=6.7.0,<7.0.0"
+scipy = ">=1.17.1,<2.0.0"
+sympy = ">=1.14.0,<2.0.0"
+loguru = ">=0.7.3,<0.8.0"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

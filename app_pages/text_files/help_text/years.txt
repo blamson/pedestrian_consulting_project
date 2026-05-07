@@ -1,0 +1,5 @@
+Years
+- Number of years where an accident may happen.
+- Used to calculate long term pedestrian risk.
+- Assumes no change in crash rate over selected time period.
+- Assumes no change in traffic volume over selected time period. 

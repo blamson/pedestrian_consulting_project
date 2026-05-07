@@ -1,0 +1,7 @@
+Traffic Signal
+- Installation of a traffic signal
+- CMF Value: 0.77. Reduces crashes by 23%.
+- Crash Types: All
+- Intersection Types: 4-leg stop controlled only
+- CMF Clearinghouse ID: 319
+- Link: https://cmfclearinghouse.fhwa.dot.gov/detail.php?facid=319

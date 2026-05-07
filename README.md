@@ -32,3 +32,83 @@ Most of this directory is simply markdown notes and images, though some code was
     - `readr`
     - `ggplot2`
     - `ggrepel` 
+
+# Repository Setup With Poetry
+
+## Setup
+
+This project uses `poetry` and requires Python 3.12.
+
+### 1. Install Python 3.12
+
+Required version (from `.python-version`):
+```bash
+cat .python-version
+# 3.12.2
+```
+
+Install with pyenv (recommended):
+```bash
+brew install pyenv  # macOS
+
+pyenv install 3.12.2
+pyenv local 3.12.2
+```
+
+Verify:
+```bash
+python --version
+# Should be 3.12.x
+```
+
+---
+
+### 2. Install Poetry
+
+```bash
+curl -sSL https://install.python-poetry.org | python3 -
+```
+
+Verify:
+```bash
+poetry --version
+```
+
+If not found:
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+---
+
+### 3. Install dependencies
+
+```bash
+poetry config virtualenvs.in-project true
+poetry install
+```
+
+---
+
+### 4. Run the app (Streamlit)
+
+```bash
+poetry run streamlit run <your_app_file>.py
+```
+
+---
+
+## Notes
+
+- Python must be **3.12.x** (3.13 will likely break dependencies)
+- Virtual environment is created in `.venv/`
+- `poetry.lock` ensures reproducible installs — commit it and don’t modify manually
+- If Poetry picks the wrong Python:
+  ```bash
+  poetry env use $(pyenv which python)
+  ```
+
+- If you see build issues with `scipy`, ensure system build tools are installed (e.g., Xcode CLI tools on macOS):
+  ```bash
+  xcode-select --install
+  ```

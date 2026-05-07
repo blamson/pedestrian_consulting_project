@@ -1,0 +1,5 @@
+Agate Traffic Volume
+- Vehicles per day on Agate Ave.
+- Formally known as AADT Major.
+- Max value determined by model used.
+- Default value taken from CDOT.

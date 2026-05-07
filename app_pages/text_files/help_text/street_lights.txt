@@ -1,0 +1,6 @@
+Street Lights
+- Lights that provide illumination at night. 
+- Not to be confused with traffic signals.
+- CMF Value of 0.91. Reduces crashes by 9%. 
+- Crash Types: All Crashes
+- Source: HSM Equation 12-36

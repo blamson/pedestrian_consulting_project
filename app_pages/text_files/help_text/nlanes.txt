@@ -1,0 +1,4 @@
+Number of Lanes
+- The maximum number of lanes a pedestrian must cross on the intersection.
+- NOTE: Only applies to direct pedestrian estimates. 
+- As such, this number will not impact vehicle crash rates, even in the signalized scenario.
