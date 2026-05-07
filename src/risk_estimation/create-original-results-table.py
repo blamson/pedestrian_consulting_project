@@ -24,7 +24,7 @@ before_low = estimate_crashes(
     int_type=mesa.int_type,
     aadt_major=aadt_major,
     aadt_minor=mesa.compute_minor_aadt(aadt_major, pct=mesa.minor_pct_default),
-    scenario_name="Before - Low - Indirect",
+    scenario_name="Before - Low",
     aadt_max=aadt_limits,
     years=10
 )
@@ -35,7 +35,7 @@ before_high = estimate_crashes(
     int_type=mesa.int_type,
     aadt_major=aadt_major,
     aadt_minor=mesa.compute_minor_aadt(aadt_major, pct=mesa.minor_pct_alt),
-    scenario_name="Before - High - Indirect",
+    scenario_name="Before - High",
     aadt_max=aadt_limits,
     years=10
 )
@@ -46,7 +46,7 @@ after_low = estimate_crashes(
     int_type=mesa.int_type,
     aadt_major=aadt_major,
     aadt_minor=mesa.compute_minor_aadt(aadt_major, pct=mesa.minor_pct_default),
-    scenario_name="After - Low - Indirect",
+    scenario_name="After - Low",
     aadt_max=aadt_limits,
     years=10,
     bulbout_cmf=mesa.bulbout_default
@@ -58,7 +58,7 @@ after_high = estimate_crashes(
     int_type=mesa.int_type,
     aadt_major=aadt_major,
     aadt_minor=mesa.compute_minor_aadt(aadt_major, pct=mesa.minor_pct_alt),
-    scenario_name="After - High - Indirect",
+    scenario_name="After - High",
     aadt_max=aadt_limits,
     years=10,
     bulbout_cmf=mesa.bulbout_default

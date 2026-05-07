@@ -1,4 +1,5 @@
 import plotly.express as px
+import streamlit as st
 
 def make_accident_bar(df, y_col, title, y_label, key, scenario_order):
 
@@ -28,3 +29,30 @@ def make_accident_bar(df, y_col, title, y_label, key, scenario_order):
 
     return fig, key
 
+
+# For sure w/ the accident rate tab. may make more modular?
+def render_charts(df, key_prefix):
+    scenario_order = df["scenario"].to_list()
+
+    col1, col2 = st.columns(2)
+
+    fig1, key1 = make_accident_bar(
+        df,
+        y_col="pred_ped",
+        title="Pedestrian Accident Rate",
+        y_label="Accidents per Year",
+        key=f"{key_prefix}_ped",
+        scenario_order=scenario_order
+    )
+
+    fig2, key2 = make_accident_bar(
+        df,
+        y_col="pred_veh",
+        title="Vehicle Accident Rate",
+        y_label="Accidents per Year",
+        key=f"{key_prefix}_veh",
+        scenario_order=scenario_order
+    )
+
+    col1.plotly_chart(fig1, key=key1)
+    col2.plotly_chart(fig2, key=key2)
