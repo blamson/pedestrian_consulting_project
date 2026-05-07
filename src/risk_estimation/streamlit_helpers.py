@@ -330,18 +330,21 @@ def sidebar_treatments(ixn: Intersection) -> Dict[str, bool]:
         "Two Way Left Turn Lane",
         value=True,
         key=f"{ixn.name}_twltl_cmf",
+        help=load_text("app_pages/text_files/help_text/twltl.txt")
     )
 
     lighting = st.sidebar.checkbox(
         "Street Lights",
         value=True,
         key=f"{ixn.name}_lighting_cmf",
+        help=load_text("app_pages/text_files/help_text/street_lights.txt")
     )
 
     bulbout = st.sidebar.checkbox(
         "Bulbout",
         value=ixn.bulbout_default,
         key=f"{ixn.name}_bulbout_cmf",
+        help=load_text("app_pages/text_files/help_text/bulbout.txt")
     )
 
     signal = st.sidebar.checkbox(
@@ -349,6 +352,7 @@ def sidebar_treatments(ixn: Intersection) -> Dict[str, bool]:
         value=ixn.signal_default,
         key=f"{ixn.name}_signal_cmf",
         disabled=(ixn.int_type != "4st"),
+        help=load_text("app_pages/text_files/help_text/traffic_signal.txt")
     )
 
     return {
