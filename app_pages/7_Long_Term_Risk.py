@@ -51,10 +51,10 @@ tab1, tab2, tab3, tab4 = st.tabs([
 ])
 
 with tab1:
-    plotting_helpers.render_long_term_risk(results_df, "selected", inputs.years,)
+    plotting_helpers.render_long_term_risk(results_df, "selected", inputs.years)
 
 with tab2:
-    plotting_helpers.render_long_term_risk(original_results, "default")
+    plotting_helpers.render_long_term_risk(original_results, "default", inputs.years)
 
 with tab3:
     st.write(results_df)
