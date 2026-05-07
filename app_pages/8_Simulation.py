@@ -1,7 +1,6 @@
 import streamlit as st
 import polars as pl
-import plotly.express as px
-from src.risk_estimation import crash_frequency_helpers as risk_mod, streamlit_helpers as helpers, plotting_helpers
+from risk_estimation import crash_frequency_helpers as risk_mod, streamlit_helpers as helpers, plotting_helpers
 from loguru import logger
 
 title = "Simulating Long Term Risk"
@@ -63,8 +62,8 @@ if "sim_history" not in st.session_state:
 
 button = st.button("Run a single simulation", type="primary")
 col1, col2 = st.columns(2)
-metric_width=250
 if button:
+    logger.info("Running simulation")
     simulated_df = risk_mod.simulate_accidents_over_time(results_df)
     st.session_state.sim_history.append(simulated_df)
     n_dashboard_cols = results_df.height
@@ -73,18 +72,18 @@ if button:
         col1.metric(
             f"{scenario_name}",
             value=scenario["simulated_total_crashes"],
-            border=True,
-            width=metric_width
+            border=True
         )
+    logger.success(f"Simulation complete - Total simulations: {len(st.session_state.sim_history)}")
 
 
 if len(st.session_state.sim_history) > 0:
+    logger.info("Collecting all simulation results")
     all_sims = pl.concat(st.session_state.sim_history, how="vertical_relaxed")
     col1.metric(
         "Number of simulations ran",
         value=int(all_sims.height / results_df.height),
-        border=True,
-        width=metric_width
+        border=True
     )
 
     agg_df = (
@@ -94,11 +93,12 @@ if len(st.session_state.sim_history) > 0:
             pl.col("simulated_total_crashes").sum().alias("total_crashes")
         )
     )
+    logger.success("Simulation results collected as polars dataframe")
 else:
     agg_df = None
 
 if agg_df is not None:
-
+    logger.info("Creating simulation barplot")
     scenario_order = results_df["scenario"].to_list()
     fig, key = plotting_helpers.make_accident_bar(
         agg_df, 
@@ -115,4 +115,5 @@ if agg_df is not None:
             categoryarray=scenario_order
         )
     )
-    col2.plotly_chart(fig, key)
+    col2.plotly_chart(fig)
+    logger.success("Simulation barplot created")

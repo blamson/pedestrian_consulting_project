@@ -1,10 +1,10 @@
 import streamlit as st
 import polars as pl
 import plotly.express as px
-from src.risk_estimation import crash_frequency_helpers as risk_mod, streamlit_helpers as helpers
+from risk_estimation import crash_frequency_helpers as risk_mod, streamlit_helpers as helpers
 from loguru import logger
 
-title = "Tinkerin"
+title = "Long Term Risk"
 logger.info(f"[Streamlit Navigation] - Loading Page: {title}")
 st.set_page_config(layout="wide")
 st.title(title)

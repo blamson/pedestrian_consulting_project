@@ -1,5 +1,5 @@
 import streamlit as st
-from src.risk_estimation import crash_frequency_helpers as risk_mod, streamlit_helpers as helpers, plotting_helpers
+from risk_estimation import crash_frequency_helpers as risk_mod, streamlit_helpers as helpers, plotting_helpers
 from loguru import logger
 
 title = "Accident Rates"
