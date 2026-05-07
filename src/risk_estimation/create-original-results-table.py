@@ -136,7 +136,8 @@ if args.sweep:
         aadt_limits,
         mesa,
         inputs=None,
-        sweep_century=True
+        sweep_century=True,
+        scenarios=['Before - Low', 'After - Low', '']
     )
     mesa_high = build_results_df(
         spfs,
@@ -144,7 +145,8 @@ if args.sweep:
         mesa,
         inputs=None,
         sweep_century=True,
-        mesa_high=True
+        mesa_high=True,
+        scenarios=['Before - High', 'After - High', '']
     )
     fourth = build_results_df(
         spfs,
@@ -158,4 +160,3 @@ if args.sweep:
     logger.info("Writing dataframe to csv")
     name = datetime.today().strftime('%Y-%m-%d')
     sweep_df.write_csv(f"data/results/sweep_results_{name}.csv")
-    

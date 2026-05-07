@@ -516,6 +516,7 @@ def build_results_df(
     aadt_limit_table: pl.DataFrame,
     intersection,
     inputs,
+    scenarios=['Before - Indirect', 'After - Indirect', 'After - Direct'],
     sweep_century=False,
     mesa_high=False
 ) -> pl.DataFrame:
@@ -558,7 +559,7 @@ def build_results_df(
         aadt_major=aadt_major,
         aadt_minor=aadt_minor_before,
         aadt_max=aadt_limit_table,
-        scenario_name="Before - Indirect",
+        scenario_name=scenarios[0],
         years=years,
     )
 
@@ -569,7 +570,7 @@ def build_results_df(
         aadt_major=aadt_major,
         aadt_minor=aadt_minor_after,
         aadt_max=aadt_limit_table,
-        scenario_name="After - Indirect",
+        scenario_name=scenarios[1],
         twltl_cmf=twltl_cmf,
         signal_cmf=signal_cmf,
         bulbout_cmf=bulbout_cmf,
@@ -587,7 +588,7 @@ def build_results_df(
             aadt_major=aadt_major,
             aadt_minor=aadt_minor_after,
             aadt_max=aadt_limit_table,
-            scenario_name="After - Direct",
+            scenario_name=scenarios[2],
             nlanes=nlanes,
             pedvol=pedvol,
             years=years,
