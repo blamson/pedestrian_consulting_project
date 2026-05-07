@@ -1,6 +1,7 @@
 import streamlit as st
-from src.risk_estimation import crash_frequency_helpers as risk_mod, streamlit_helpers as helpers, plotting_helpers
+from risk_estimation import crash_frequency_helpers as risk_mod, streamlit_helpers as helpers, plotting_helpers
 from loguru import logger
+import polars as pl
 
 title = "Accident Rates"
 logger.info(f"[Streamlit Navigation] - Loading Page: {title}")
@@ -16,6 +17,12 @@ spf_table = helpers.load_data("data/spfs.csv")
 intersection, inputs = helpers.build_sidebar(
     aadt_limit_table,
     include_years=False
+)
+
+# Load original results
+original_results = (
+    helpers.load_data("data/results/results_2026-05-07.csv")
+    .filter(pl.col("intersection_name") == intersection.name)
 )
 
 # Debug info
@@ -35,29 +42,22 @@ st.header("Expected Accidents Per Year")
 text = helpers.load_text("app_pages/text_files/dashboard/accidents-per-year.md")
 st.markdown(text)
 
-tab1, tab2 = st.tabs(["Chart - Selected Values", "Data"])
-col1, col2 = tab1.columns(2)
+tab1, tab2, tab3, tab4 = st.tabs([
+    "Chart - Selected Values",
+    "Chart - Default Values",
+    "Data - Selected Values",
+    "Data - Default Values"
+])
 
-scenario_order = results_df["scenario"].to_list()
-fig1, key1 = plotting_helpers.make_accident_bar(
-    results_df,
-    y_col="pred_ped",
-    title="Pedestrian Accident Rate",
-    y_label="Accidents per Year",
-    key="pedestrian_accident_rate_plot",
-    scenario_order=scenario_order
-)
+with tab1:
+    plotting_helpers.render_charts(results_df, "selected")
 
-fig2, key2 = plotting_helpers.make_accident_bar(
-    results_df,
-    y_col="pred_veh",
-    title="Vehicle Accident Rate",
-    y_label="Accidents per Year",
-    key="vehicle_accident_rate_plot",
-    scenario_order=scenario_order
-)
+with tab2:
+    plotting_helpers.render_charts(original_results, "default")
 
-col1.plotly_chart(fig1, key=key1)
-col2.plotly_chart(fig2, key=key2)
+with tab3:
+    st.write(results_df.drop(["long_run_ped_prob", "years"]))
 
-tab2.write(results_df.drop(["long_run_ped_prob", "years"]))
+with tab4:
+    st.write(original_results.drop(["long_run_ped_prob", "years"]))
+    
