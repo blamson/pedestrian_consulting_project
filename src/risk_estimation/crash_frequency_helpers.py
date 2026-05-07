@@ -516,19 +516,40 @@ def build_results_df(
     aadt_limit_table: pl.DataFrame,
     intersection,
     inputs,
-    sweep_century=False
+    sweep_century=False,
+    mesa_high=False
 ) -> pl.DataFrame:
-    aadt_major = inputs.aadt_major
+
+    if inputs is not None:
+        twltl_cmf=inputs.cmf["twltl_cmf"]
+        signal_cmf=inputs.cmf["signal_cmf"]
+        bulbout_cmf=inputs.cmf["bulbout_cmf"]
+        lighting_cmf=inputs.cmf["lighting_cmf"]
+        nlanes=inputs.nlanes
+        pedvol=inputs.pedvol
+        aadt_major=inputs.aadt_major
+        years = inputs.years if inputs.years is not None else 10
+    else:
+        twltl_cmf=True
+        signal_cmf=intersection.signal_default
+        bulbout_cmf=intersection.bulbout_default
+        lighting_cmf=True
+        nlanes=intersection.nlanes_default
+        pedvol=intersection.pedvol_default
+        aadt_major=11000
+        years=10
+
     if intersection.name == "Agate & Mesa":
-        minor_pct = inputs.minor_pct
-        aadt_minor_before = intersection.compute_minor_aadt(aadt_major, minor_pct)
+        if inputs is not None:
+            aadt_minor_before = intersection.compute_minor_aadt(aadt_major, inputs.minor_pct)
+        else:
+            minor_pct_used = intersection.minor_pct_default if not mesa_high else intersection.minor_pct_alt
+            aadt_minor_before = intersection.compute_minor_aadt(aadt_major, minor_pct_used)
         aadt_minor_after = aadt_minor_before
     
     else:
         aadt_minor_before = intersection.compute_minor_aadt(aadt_major, intersection.minor_pct_default)
         aadt_minor_after = intersection.compute_minor_aadt(aadt_major, intersection.minor_pct_alt)
-
-    years = inputs.years if inputs.years is not None else 10
 
     before = estimate_crashes(
         spfs=spf_table,
@@ -549,10 +570,10 @@ def build_results_df(
         aadt_minor=aadt_minor_after,
         aadt_max=aadt_limit_table,
         scenario_name="After - Indirect",
-        twltl_cmf=inputs.cmf["twltl_cmf"],
-        signal_cmf=inputs.cmf["signal_cmf"],
-        bulbout_cmf=inputs.cmf["bulbout_cmf"],
-        lighting_cmf=inputs.cmf["lighting_cmf"],
+        twltl_cmf=twltl_cmf,
+        signal_cmf=signal_cmf,
+        bulbout_cmf=bulbout_cmf,
+        lighting_cmf=lighting_cmf,
         years=years,
     )
 
@@ -567,8 +588,8 @@ def build_results_df(
             aadt_minor=aadt_minor_after,
             aadt_max=aadt_limit_table,
             scenario_name="After - Direct",
-            nlanes=inputs.nlanes,
-            pedvol=inputs.pedvol,
+            nlanes=nlanes,
+            pedvol=pedvol,
             years=years,
         )
         results.append(direct)
