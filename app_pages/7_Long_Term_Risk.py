@@ -40,9 +40,6 @@ results_df = (
     )
 )
 
-text = helpers.load_text("app_pages/text_files/dashboard/long-term-risk.md")
-st.markdown(text)
-
 tab1, tab2, tab3, tab4 = st.tabs([
     "Chart - Selected Values",
     "Chart - Default Values",
@@ -61,3 +58,7 @@ with tab3:
 
 with tab4:
     st.write(original_results)
+
+text = helpers.load_text("app_pages/text_files/dashboard/long-term-risk.md")
+if st.toggle("Show explanation?"):
+    st.markdown(text)

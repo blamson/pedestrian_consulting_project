@@ -42,16 +42,16 @@ results_df = (
     )
 )
 
-st.header(f"Expected Accidents for {inputs.years} year period.")
+st.header(f"Chance of an accident in a {inputs.years} year period.")
 n_dashboard_cols = results_df.height
 dashboard_cols = st.columns(n_dashboard_cols)
 col_index = 0
 for scenario in results_df.iter_rows(named=True):
-    exp_acc = round(scenario["pred_ped"] * scenario["years"],3)
+    exp_acc = round(scenario["pred_ped"] * scenario["years"] * 100 ,2)
     scenario_name = scenario["scenario"]
     dashboard_cols[col_index].metric(
         f"{scenario_name}",
-        value=exp_acc,
+        value=f"{exp_acc}%",
         border=True
     )
     col_index += 1
@@ -117,3 +117,7 @@ if agg_df is not None:
     )
     col2.plotly_chart(fig)
     logger.success("Simulation barplot created")
+
+text = helpers.load_text("app_pages/text_files/dashboard/simulations.md")
+if st.toggle("Show explanation?"):
+    st.markdown(text)

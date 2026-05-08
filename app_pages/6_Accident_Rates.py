@@ -9,6 +9,7 @@ logger.info(f"[Streamlit Navigation] - Loading Page: {title}")
 st.set_page_config(layout="wide")
 st.title(title)
 
+st.header("Expected Accidents Per Year")
 # Data
 aadt_limit_table = helpers.load_data("data/aadt_maximums.csv")
 spf_table = helpers.load_data("data/spfs.csv")
@@ -38,9 +39,6 @@ results_df = risk_mod.build_results_df(
 )
 
 # Visualization
-st.header("Expected Accidents Per Year")
-text = helpers.load_text("app_pages/text_files/dashboard/accidents-per-year.md")
-st.markdown(text)
 
 tab1, tab2, tab3, tab4 = st.tabs([
     "Chart - Selected Values",
@@ -61,3 +59,12 @@ with tab3:
 with tab4:
     st.write(original_results.drop(["long_run_ped_prob", "years"]))
     
+text = helpers.load_text("app_pages/text_files/dashboard/accidents-per-year.md")
+estimation_text = helpers.load_text("app_pages/text_files/dashboard/estimation-methods.md")
+
+if intersection.name == "Agate & 4th":
+    if st.toggle("Show direct estimation explanation?"):
+        st.markdown(estimation_text)
+
+if st.toggle("Show explanation?"):
+    st.markdown(text)
