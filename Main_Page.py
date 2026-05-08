@@ -16,14 +16,15 @@ results = st.Page("app_pages/4_Results_and_Interpretation.py", title="Results an
 limitations = st.Page("app_pages/5_Limitations.py", title="Limitations")
 
 # Interactive tools (his new pages)
-accident_rates = st.Page("app_pages/6_Accident_Rates.py", title="Accident Rates")
-long_term_risk = st.Page("app_pages/7_Long_Term_Risk.py", title="Long Term Risk")
-simulation = st.Page("app_pages/8_Simulation.py", title="Simulation")
+accident_rates = st.Page("app_pages/6_Accident_Rates.py", title="📊 Accident Rates")
+long_term_risk = st.Page("app_pages/7_Long_Term_Risk.py", title="📊 Long Term Risk")
+simulation = st.Page("app_pages/8_Simulation.py", title="🎲 Simulation")
+bulk_simulation = st.Page("app_pages/9_Bulk_Simulation.py", title="🎲 Bulk Simulation")
 
 pg = st.navigation({
     "": [home],
     "Methodology and Results": [background, methodology, data, results, limitations],
-    "Interactive Tools": [accident_rates, long_term_risk, simulation],
+    "Interactive Tools": [accident_rates, long_term_risk, simulation, bulk_simulation],
 })
 
 pg.run()

@@ -2,20 +2,19 @@ import plotly.express as px
 import polars as pl
 import streamlit as st
 
-def make_accident_bar(df, y_col, title, y_label, key, scenario_order):
+def make_accident_bar(df, y_col, title, y_label, key, scenario_order, x_col="scenario", barmode=None, legend=False, x_label="Scenario", rounding_format=".3f"):
 
     fig = px.bar(
         df,
-        x="scenario",
+        x=x_col,
         y=y_col,
-        # barmode="group",
         text=y_col,
         title=title,
         labels={
-            "scenario": "Scenario",
+            x_col: x_label,
             y_col: y_label,
         },
-        hover_data={y_col: ':.3f'},
+        hover_data={y_col: rounding_format},
         color="scenario",
         color_discrete_sequence=px.colors.qualitative.Vivid,
         category_orders={"scenario": scenario_order}
@@ -23,10 +22,13 @@ def make_accident_bar(df, y_col, title, y_label, key, scenario_order):
 
     fig.update_traces(
         textposition="outside",
-        texttemplate="%{text:.3f}"
+        texttemplate=f"%{{y:{rounding_format}}}"
     )
 
-    fig.update_layout(showlegend=False)
+    if not legend:
+        fig.update_layout(showlegend=False)
+    if barmode is not None:
+        fig.update_layout(barmode=barmode)
 
     return fig, key
 

@@ -462,7 +462,7 @@ def estimate_crashes(
 
     pred_veh = nbi * cmf_veh
     if int_type in ["4sg", "3sg"]:
-        pred_ped=nped_base
+        pred_ped=nped_base * cmf_ped
     else:
         pred_ped = nped_base * cmf_veh * cmf_ped
     long_run_prob = calc_long_run_accident_probability(num_accidents_per_year=pred_ped, years=years)
@@ -589,6 +589,7 @@ def build_results_df(
             aadt_minor=aadt_minor_after,
             aadt_max=aadt_limit_table,
             scenario_name=scenarios[2],
+            bulbout_cmf=bulbout_cmf,
             nlanes=nlanes,
             pedvol=pedvol,
             years=years,
@@ -636,3 +637,33 @@ def simulate_accidents_over_time(results_df: pl.DataFrame):
         })
 
     return pl.DataFrame(rows)
+
+
+def simulate_accidents_bulk(results_df: pl.DataFrame, n_trials: int = 1000, seed=None):
+    rng = np.random.default_rng(seed)
+
+    dfs = []
+
+    for row in results_df.iter_rows(named=True):
+        lam = row["pred_ped"]
+        years = row["years"]
+        rate = lam * years
+
+        samples = rng.poisson(lam=rate, size=n_trials)
+
+        values, counts = np.unique(samples, return_counts=True)
+        probs = counts / n_trials * 100
+
+        df = pl.DataFrame({
+            **row,
+            "simulated_total_crashes": values,
+            "count": counts,
+            "probability": probs
+        })
+
+        dfs.append(df)
+
+    return (
+        pl.concat(dfs, how="vertical_relaxed")
+        .with_columns((pl.col("probability")).round(2).alias("probability"),)
+    )
