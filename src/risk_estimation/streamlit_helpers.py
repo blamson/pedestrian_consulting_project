@@ -3,6 +3,8 @@ import polars as pl
 from dataclasses import dataclass
 from typing import Dict, Tuple
 from loguru import logger
+import re
+import streamlit as st
 
 # General helpers
 @st.cache_data
@@ -458,3 +460,127 @@ def show_debug(ixn: Intersection, inputs: IntersectionInputs):
     dev_container.write(inputs)
     dev_container.header("Streamlit Session State")
     dev_container.write(st.session_state)
+
+
+# def render_report_page(md_filename: str, project_root: Path) -> None:
+#     """
+#     Render a markdown report file with inline images in Streamlit.
+#     Parses standard markdown image syntax and renders images via st.image:
+#     - Splits markdown around ![alt](path) markers
+#     - Resolves image paths relative to the project root
+#     - Supports an optional width hint via |WIDTH in the alt text
+#     Args:
+#         md_filename (str): Filename of the markdown file in docs/report_sections/.
+#         project_root (Path): Absolute path to the project root directory.
+#     Returns:
+#         None
+#     """
+#     md_path = project_root / "docs/report_sections" / md_filename
+#     content = md_path.read_text()
+#     parts = re.split(r'!\[([^\]]*)\]\(([^)]+)\)', content)
+
+#     i = 0
+#     while i < len(parts):
+#         if parts[i].strip():
+#             st.markdown(parts[i])
+#         if i + 2 < len(parts):
+#             alt_raw, img_path = parts[i+1], parts[i+2]
+#             width = None
+#             alt = alt_raw
+#             if '|' in alt_raw:
+#                 left, right = alt_raw.rsplit('|', 1)
+#                 try:
+#                     width = int(right.strip())
+#                     alt = left
+#                 except ValueError:
+#                     pass
+#             full_img = project_root / img_path
+#             if full_img.exists():
+#                 kwargs = {"caption": alt or None}
+#                 if width:
+#                     kwargs["width"] = width
+#                 st.image(str(full_img), **kwargs)
+#             else:
+#                 st.error(f"Image not found: {full_img}")
+#             i += 3
+#         else:
+#             i += 1
+
+def render_report_page(md_filename: str, project_root: Path) -> None:
+    """
+    Render a markdown report file with inline images in Streamlit.
+    Supports standard markdown image syntax with optional width hints, and
+    image rows wrapped in HTML comment markers:
+    - ![caption|450](path) renders at 450px width
+    - Images between <!-- row --> and <!-- /row --> render side-by-side
+    Args:
+        md_filename (str): Filename of the markdown file in docs/report_sections/.
+        project_root (Path): Absolute path to the project root directory.
+    Returns:
+        None
+    """
+    md_path = project_root / "docs/report_sections" / md_filename
+    content = md_path.read_text()
+
+    row_pattern = r'<!--\s*row\s*-->(.*?)<!--\s*/row\s*-->'
+    cursor = 0
+    for match in re.finditer(row_pattern, content, re.DOTALL):
+        _render_chunk(content[cursor:match.start()], project_root)
+        _render_image_row(match.group(1), project_root)
+        cursor = match.end()
+    _render_chunk(content[cursor:], project_root)
+
+
+def _render_chunk(text: str, project_root: Path) -> None:
+    parts = re.split(r'!\[([^\]]*)\]\(([^)]+)\)', text)
+    i = 0
+    while i < len(parts):
+        if parts[i].strip():
+            st.markdown(parts[i])
+        if i + 2 < len(parts):
+            alt_raw, img_path = parts[i+1], parts[i+2]
+            width = None
+            alt = alt_raw
+            if '|' in alt_raw:
+                left, right = alt_raw.rsplit('|', 1)
+                try:
+                    width = int(right.strip())
+                    alt = left
+                except ValueError:
+                    pass
+            full_img = project_root / img_path
+            if not full_img.exists():
+                st.error(f"Image not found: {full_img}")
+                i += 3
+                continue
+            if width:
+                # Constrain via columns so image renders at native resolution
+                # Assumes ~1100px content width under wide layout
+                ratio = min(max(width / 1100, 0.2), 1.0)
+                if ratio < 1.0:
+                    pad = (1 - ratio) / 2
+                    cols = st.columns([pad, ratio, pad])
+                    with cols[1]:
+                        st.image(str(full_img), caption=alt or None, use_container_width=True)
+                else:
+                    st.image(str(full_img), caption=alt or None, use_container_width=True)
+            else:
+                st.image(str(full_img), caption=alt or None)
+            i += 3
+        else:
+            i += 1
+
+
+def _render_image_row(row_content: str, project_root: Path) -> None:
+    images = re.findall(r'!\[([^\]]*)\]\(([^)]+)\)', row_content)
+    if not images:
+        return
+    cols = st.columns(len(images))
+    for col, (alt_raw, img_path) in zip(cols, images):
+        alt = alt_raw.rsplit('|', 1)[0] if '|' in alt_raw else alt_raw
+        full_img = project_root / img_path
+        with col:
+            if full_img.exists():
+                st.image(str(full_img), caption=alt or None, use_container_width=True)
+            else:
+                st.error(f"Image not found: {full_img}")
