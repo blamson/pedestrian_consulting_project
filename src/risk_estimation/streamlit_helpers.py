@@ -5,6 +5,7 @@ from typing import Dict, Tuple
 from loguru import logger
 import re
 import streamlit as st
+from pathlib import Path
 
 # General helpers
 @st.cache_data
@@ -461,50 +462,6 @@ def show_debug(ixn: Intersection, inputs: IntersectionInputs):
     dev_container.header("Streamlit Session State")
     dev_container.write(st.session_state)
 
-
-# def render_report_page(md_filename: str, project_root: Path) -> None:
-#     """
-#     Render a markdown report file with inline images in Streamlit.
-#     Parses standard markdown image syntax and renders images via st.image:
-#     - Splits markdown around ![alt](path) markers
-#     - Resolves image paths relative to the project root
-#     - Supports an optional width hint via |WIDTH in the alt text
-#     Args:
-#         md_filename (str): Filename of the markdown file in docs/report_sections/.
-#         project_root (Path): Absolute path to the project root directory.
-#     Returns:
-#         None
-#     """
-#     md_path = project_root / "docs/report_sections" / md_filename
-#     content = md_path.read_text()
-#     parts = re.split(r'!\[([^\]]*)\]\(([^)]+)\)', content)
-
-#     i = 0
-#     while i < len(parts):
-#         if parts[i].strip():
-#             st.markdown(parts[i])
-#         if i + 2 < len(parts):
-#             alt_raw, img_path = parts[i+1], parts[i+2]
-#             width = None
-#             alt = alt_raw
-#             if '|' in alt_raw:
-#                 left, right = alt_raw.rsplit('|', 1)
-#                 try:
-#                     width = int(right.strip())
-#                     alt = left
-#                 except ValueError:
-#                     pass
-#             full_img = project_root / img_path
-#             if full_img.exists():
-#                 kwargs = {"caption": alt or None}
-#                 if width:
-#                     kwargs["width"] = width
-#                 st.image(str(full_img), **kwargs)
-#             else:
-#                 st.error(f"Image not found: {full_img}")
-#             i += 3
-#         else:
-#             i += 1
 
 def render_report_page(md_filename: str, project_root: Path) -> None:
     """
