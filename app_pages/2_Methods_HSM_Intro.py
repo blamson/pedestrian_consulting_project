@@ -4,6 +4,6 @@ from loguru import logger
 from risk_estimation.streamlit_helpers import render_report_page
 
 logger.info("[Streamlit Navigation] - Loading Page: Methods: HSM Intro")
-st.title("Methods: SPFs")
+st.title("Methods: Highway Safety Manual (HSM) Intro")
 
-render_report_page("methods-hsm-intro.md", Path(__file__).resolve().parent.parent)
+render_report_page("2-methods-hsm-intro.md", Path(__file__).resolve().parent.parent)

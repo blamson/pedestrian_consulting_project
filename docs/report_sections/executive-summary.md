@@ -1,3 +1,7 @@
+Brady Lamson & Davyd Sadovskyy
+
+---
+
 ## Executive Summary
 
 Granby is investing in two traffic engineering projects along Agate Avenue. The first is a bulbout (curb extension) installation at Mesa Street, motivated directly by pedestrian safety concerns at a crossing located within half a mile of three local schools. The second is a $986,000 traffic signal at 4th Street, motivated by driver wait times rather than pedestrian safety, but which will alter pedestrian risk at the intersection because of the increased traffic volume diverted from 6th Street. This report quantifies the expected pedestrian safety effect of both projects using the federal Highway Safety Manual methodology.
@@ -21,4 +25,4 @@ Granby is investing in two traffic engineering projects along Agate Avenue. The 
 
 ### How to Use This Report
 
-The sections in the methodology and results section walks through the details of our chosen methodology, data sources, data processing, results, and limitations. For readers who want to explore the analysis interactively by adjusting traffic volumes, pedestrian counts, and intersection configurations to see how risk changes in real time, we have built a companion dashboard.
+The sections in the methodology and results section walks through the details of our chosen methodology, data sources, data processing, results, and limitations. For readers who want to explore the analysis interactively by adjusting traffic volumes, pedestrian counts, and intersection configurations to see how risk changes in real time, we have built several interactive tools.
