@@ -2,7 +2,6 @@ A **Safety Performance Function (SPF)** is a negative binomial regression model 
 
 ![An SPF is a best-fit curve through observed crash data at similar sites. Each X marks one site; the blue curve is the SPF.|450](docs/report_images/spfVisual.png)
 
-Each X in the chart above marks one observed site, and the blue curve is the SPF. The SPF does not predict what will happen at any specific intersection, only what is typical for a site of that type at that traffic volume.
 
 ## How SPFs Work
 
@@ -14,7 +13,7 @@ $$\text{Crashes per year} =\; {\Large e^{\,a \,+\, b \cdot \ln(\text{AADT}_{maj}
 
 The fitted coefficients $a$, $b$, and $c$ are different for each intersection type and crash type, and each SPF is fit under specific **base conditions** (geometry, lane count, lighting, and so on). Real intersections rarely match base conditions exactly. This is what CMFs are for, and they are covered in the next section.
 
-### What "Negative Binomial" Means Here
+### What "Negative Binomial" Means
 
 Calling these regressions negative binomial is a statement about which probability distribution the response variable (the crash count) is assumed to follow:
 
@@ -31,7 +30,7 @@ Why negative binomial and not Poisson? Because crash counts show **overdispersio
 
 $$\text{Var}(Y) = \mu + k \mu^2$$
 
-When $k = 0$ the negative binomial reduces to Poisson. The HSM reports a fitted $k$ alongside each SPF as the **overdispersion parameter**.
+When $k = 0$ the negative binomial reduces to Poisson. The HSM reports a fitted $k$ alongside each SPF as the overdispersion parameter.
 
 ## SPFs Used in This Analysis
 
